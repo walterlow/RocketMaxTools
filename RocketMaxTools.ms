@@ -21,9 +21,7 @@ global ext = ".png"
 global userscriptPath =  (GetDir #userscripts) 
 
 global mr = renderers.current = mental_ray_renderer()
---maxFileName
---getFilenameFile maxFileName 
-global baseTexName = getFilenameFile maxFileName 
+
 
 -------------------------------------------------------------------
 
@@ -358,9 +356,18 @@ Rollout Menu03 "Bake Tools"
 
 Rollout Menu04 "File Tools"
 (
+	edittext et_projName "Filename: " text: "L99-S99" fieldWidth:100 height:20 across:2
+	button btn_createProj "Create" tooltip:"Makes project folder and saves file" pos:[180, 7]
 	button btn_save2copies "Save 2 Copies" tooltip:"Save current and another copy in Screens" across:3
 	button btn_exportDAE "Export DAE" tooltip:"Export selected as DAE" 
 	button btn_buildandrun "Build & Run" tooltip:"Build then Press any key to run"
+	
+
+	on btn_createProj pressed do
+	(
+		makeDir (working_path + et_projName.text )
+		savemaxFile (working_path + et_projName.text + "\\" + et_projName.text + ".max")
+	)
 	
 	on btn_save2copies pressed do (saveCurrentFinal()) 
 		

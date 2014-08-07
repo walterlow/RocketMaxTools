@@ -5,18 +5,18 @@
 
 --maxFileName
 --getFilenameFile maxFileName 
-global baseTexName = getFilenameFile maxFileName 
+global baseTexName
 
-global diffuseTex = final_path + baseTexName + "-A" + ext
-global speclevelTex = final_path + baseTexName + "-A" + "_S" + ext
-global bumpnormalTex = final_path + baseTexName + "-A" +"_N" + ext
+global diffuseTex
+global speclevelTex 
+global bumpnormalTex
 
-global alphaTex = final_path + baseTexName + "-B" + ext
-global bumpTex = final_path + baseTexName + "-C" + ext
-global bump2Tex = final_path + baseTexName + "-D" + ext
-global lightmapTex = final_path + baseTexName + "-E" + ext
-global silhouetteTex = final_path + baseTexName + "-F" + ext
-global decalTex = final_path + baseTexName + "-G" + ext
+global alphaTex
+global bumpTex 
+global bump2Tex 
+global lightmapTex 
+global silhouetteTex
+global decalTex
 
 
 fn existFile fname = (getfiles fname).count != 0
@@ -43,6 +43,18 @@ fn setupDX9Mats =
 	--getProperty  meditmaterials[1]  #opacity
 -- 	local shader_path = "C:\\Projects\\Cow2\\Assets\\Shaders\\"
 	--macros.run "Medit Tools" "clear_medit_slots"
+	
+	baseTexName = getFilenameFile maxFileName
+	diffuseTex = final_path + baseTexName + "-A" + ext
+	speclevelTex = final_path + baseTexName + "-A" + "_S" + ext
+	bumpnormalTex = final_path + baseTexName + "-A" +"_N" + ext
+
+	alphaTex = final_path + baseTexName + "-B" + ext
+	bumpTex = final_path + baseTexName + "-C" + ext
+	bump2Tex = final_path + baseTexName + "-D" + ext
+	lightmapTex = final_path + baseTexName + "-E" + ext
+	silhouetteTex = final_path + baseTexName + "-F" + ext
+	decalTex = final_path + baseTexName + "-G" + ext
 	
 	if sceneMaterials["Main_2UV"] == undefined then
 	(
