@@ -16,8 +16,8 @@ fn SetupMR =
 	mr.FinalGatherRadius = 32
 	mr.FinalGatherMinRadius = 3.3
 	
-	mr.MaximumReflections = 0
-	mr.MaximumRefractions = 0
+	mr.MaximumReflections = 1
+	mr.MaximumRefractions = 1
 	
 	MessageBox("MentalRay FG Settings Loaded")
 )
