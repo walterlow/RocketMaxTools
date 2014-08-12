@@ -232,8 +232,9 @@ fn SetupMats =
 (
 	if(getFilenameFile maxFileName != "") then
 	(
-	setupMaxMats()
+		--call dx9 mats first to init variables in dx9 fn
 	setupDX9Mats()
+	setupMaxMats()
 	)
 	else
 	(messagebox("Please save and name your file first."))
