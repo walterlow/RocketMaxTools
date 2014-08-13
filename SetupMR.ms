@@ -2,7 +2,7 @@
 fn SetupMR =
 (
 	--FG BASICS
-	mr = renderers.current = mental_ray_renderer()
+	--mr = renderers.current = mental_ray_renderer()
 	mr.FinalGatherEnable2 = true 
 	mr.FinalGatherDensity = 0.3
 	mr.FinalGatherAccuracy = 1100

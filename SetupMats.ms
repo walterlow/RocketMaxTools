@@ -10,6 +10,7 @@ global baseTexName
 global diffuseTex
 global speclevelTex 
 global bumpnormalTex
+global glassSpeclevelTex
 
 global alphaTex
 global bumpTex 
@@ -47,6 +48,7 @@ fn setupDX9Mats =
 	baseTexName = getFilenameFile maxFileName
 	diffuseTex = final_path + baseTexName + "-A" + ext
 	speclevelTex = final_path + baseTexName + "-A" + "_S" + ext
+	glassSpeclevelTex = final_path + baseTexName + "-B" + "_S" + ext
 	bumpnormalTex = final_path + baseTexName + "-A" +"_N" + ext
 
 	alphaTex = final_path + baseTexName + "-B" + ext
@@ -147,7 +149,7 @@ fn setupDX9Mats =
 	alpha2uv.technique = 0
 	alpha2uv.renderMaterial = StandardMaterial name:"simple-alpha-2uv_renderstyle"
 	if (existFile (alphaTex)) do (alpha2uv.TexDiffuse = openBitMap (alphaTex) ) 
-	if (existFile (bumpTex)) do (alpha2uv.TexBump = openBitMap (bumpTex) ) 
+	if (existFile (bump2Tex)) do (alpha2uv.TexBump = openBitMap (bump2Tex) ) 
 	if (existFile (lightmapTex)) do (alpha2uv.TexLightMap = openBitMap (lightmapTex) ) 
 	alpha2uv.Shininess = 30
 	alpha2uv.BloodWallDepth = 2.5
@@ -219,7 +221,7 @@ fn setupMaxMats =
 	glassMat.diffuseMap = Bitmaptexture fileName:  (alphaTex)
 	
 	glassMat.specularLevelMapEnable = on
-	glassMat.specularLevelMap = Bitmaptexture fileName: (speclevelTex)
+	glassMat.specularLevelMap = Bitmaptexture fileName: (glassSpeclevelTex)
 	
 	--glassMat.bumpMapEnable = on
 	--glassMat.bumpMap = Normal_Bump () --Normal_Bump name:"FFF"

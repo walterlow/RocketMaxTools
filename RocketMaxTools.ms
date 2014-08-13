@@ -21,7 +21,7 @@ global ext = ".png"
 global userscriptPath =  (GetDir #userscripts) 
 
 global mr = renderers.current = mental_ray_renderer()
-
+mr.DistributedEnable = false
 
 -------------------------------------------------------------------
 
@@ -48,16 +48,6 @@ global mr = renderers.current = mental_ray_renderer()
 ::fileIn( userscriptPath + "\\RocketMaxTools\CreateFX.ms")
 ::fileIn( userscriptPath + "\\RocketMaxTools\TransferUV.ms")
 
---fn PromptBox theMessage = 	
---(
---	promptText = theMessage
-	--if Prompt != undefined then destroyDialog Prompt
-		--Rollout Prompt "Message:" width:200 height: 30
-	--	(
-		--	label label_prompt promptText
-	--	)
-	--createDialog Prompt
---)
 
 fn selSomething =
 (
@@ -275,28 +265,6 @@ Rollout dial_doorHelper "Door Helper" width:200
 
 	on btn_doorHelper pressed do ( try(destroyDialog dial_doorHelper)catch(); createDialog dial_doorHelper)
 	on btn_autoDoors pressed do (AutoDoors())
-
-	
-	--Script
-	on btn_mirrorflip pressed do 
-	(
-		
-		if querybox "Do you want to correct the normals?" beep:true then
-		(
-				max modify mode
-				modPanel.addModToSelection (Normalmodifier ()) ui:on
-				modPanel.addModToSelection (Edit_Poly ()) ui:on
-				maxOps.CollapseNode $ on
-				(
-					max mirror
-				)
-		)
-		else
-		(
-			max mirror
-		)
-
-	)
 	
 	on btn_xform pressed do (ResetXFPoly())
 	

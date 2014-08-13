@@ -15,8 +15,8 @@ fn saveCurrentFinal =
 			--"C:\Projects\Cow2\Assets\Screens\working\\" 
 			work_path = ( working_path + (getFilenameFile maxFileName) + "\\" + maxFileName  ) --current
 			screens_path = ( final_path + maxFileName ) --final
-			savemaxFile work_path 
 			savemaxFile screens_path useNewFile:false
+			savemaxFile work_path 
 		)
 	
 	

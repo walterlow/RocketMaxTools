@@ -10,17 +10,17 @@ fn BakeTextures obj texsize =
 	macros.run "Render" "BakeDialog"
 	--mr = renderers.current = mental_ray_renderer()
 	
-	working_path = "C:\Projects\Cow2\Assets\Screens\working\\" + getFileNameFile maxFileName + "\\"
-	--working_path = maxFilePath + getfilenamefile maxFileName  + "\\"
+	render_path = "C:\Projects\Cow2\Assets\Screens\working\\" + getFileNameFile maxFileName + "\\"
+	--render_path = maxFilePath + getfilenamefile maxFileName  + "\\"
 	
 	--WTF IS THIS ABSTRACT CODE?  (sets the default output folder of RTT)
 	
-	if (not (doesfileExist working_path))then(
-		MAKEDir working_path
+	if (not (doesfileExist render_path))then(
+		MAKEDir render_path
 	) else
 	(
 		RTT_SceneData_AppData_Index = 0x41dd73d5
-		RTT_data.FileOutput_FilePath = working_path
+		RTT_data.FileOutput_FilePath = render_path
 		setAppData rootNode (RTT_SceneData_AppData_Index+4) RTT_data.FileOutput_FilePath 
 	)
 	
@@ -36,11 +36,11 @@ fn BakeTextures obj texsize =
 	lm.outputSzX = lm.outputSzY = texsize
 	--lm.filenameUnique = true
 	
-	--lm.fileType = working_path + $.name + lm.elementName + ".png"
-	--lm.fileName = working_path + $.name + lm.elementName + ".png"
+	--lm.fileType = render_path + $.name + lm.elementName + ".png"
+	--lm.fileName = render_path + $.name + lm.elementName + ".png"
 	
-	lm.fileType = working_path + $.name + "_Light"  + ".png"
-	lm.fileName = working_path + $.name + "_Light"  + ".png"
+	lm.fileType = render_path + $.name + "_Light"  + ".png"
+	lm.fileName = render_path + $.name + "_Light"  + ".png"
 
 	lm.shadowsOn = true
 	lm.directOn = true
@@ -51,8 +51,8 @@ fn BakeTextures obj texsize =
 	ilm = LightingMap()
 	ilm.outputSzX = ilm.outputSzY = texsize
 	--ilm.filenameUnique = true
-	ilm.fileType = working_path + $.name + "_IL" + ".png"
-	ilm.fileName = working_path + $.name + "_IL" + ".png"
+	ilm.fileType = render_path + $.name + "_IL" + ".png"
+	ilm.fileName = render_path + $.name + "_IL" + ".png"
 	
 	ilm.shadowsOn = false
 	ilm.directOn = false
@@ -62,8 +62,8 @@ fn BakeTextures obj texsize =
 	ao = Ambient_Occlusion()
 	ao.outputSzX = ao.outputSzY = texsize
 	--ao.filenameUnique = true
-	ao.fileType = working_path + $.name + "_AO" + ".png"
-	ao.fileName = working_path + $.name + "_AO" + ".png"
+	ao.fileType = render_path + $.name + "_AO" + ".png"
+	ao.fileName = render_path + $.name + "_AO" + ".png"
 	
 	ao.samples = 512
 	ao.spread = 1
