@@ -59,8 +59,6 @@ fn selSomething =
 Rollout Menu01 "Layering Tools"
 (
 	--button CreateLayers "Create Layers from Selection" width:buttonWidth
-
-	
 	button btn_lightLayers "Lights"  pos:[8,8] width: 50
 	button btn_Black "Black"  tooltip:"Black" pos:[58,8] width: 50
 	button btn_fullBright "FB" tooltip:"Full Bright" pos:[108,8] width: 50
@@ -70,22 +68,39 @@ Rollout Menu01 "Layering Tools"
 	button btn_fx "FX" pos:[58,30] width: 50
 	button btn_main "Main" pos:[108,30] width: 50
 	button btn_ladder "Ladders" pos:[158,30] width:50
-
+	
+	local files = #( "Chicken", "FX", "Grates", "Lines", "Abattoir Lines")
 
 	group ""(
 	button btn_bouncer "Bouncer" pos:[8,70] width: 50
 	colorpicker theColor "" color:[50,50,50] pos:[58,70]
-	button btn_importFX "Import FX" pos:[108, 70]
-	button btn_importChicken "Chicken" pos:[178, 70]
+	--button btn_importFX "Import FX" pos:[108, 70]
+	--button btn_importChicken "Chicken" pos:[178, 70]
+		
+	dropdownlist ddl_import "" items: files across: 2 width: 80 pos:[108, 70]
+	button btn_import "Import" pos:[190, 70]
 	)
 	
 	button btn_delEmptyLayers "Del Empty Layers"  across:2
-	button btn_delemptyobjects "Del Empty Objects"
+	button btn_delemptyobjects "Del Empty Objects" items:files
 	
 	on theColor changed new_col do (if sceneMaterials["bouncer"] != undefined then sceneMaterials["bouncer"].diffusecolor = new_col)
 	on btn_bouncer pressed do (CreateBouncer())
-	on btn_importFX pressed do (importFX())
-	on btn_importChicken pressed do ( mergemaxfile (userscriptPath + "\\RocketMaxTools\\Assets\\Chicken\\RiggedChicken.max") #select #useSceneMtlDups )
+	--on btn_importFX pressed do (importFX())
+	--on btn_importChicken pressed do ( mergemaxfile (userscriptPath + "\\RocketMaxTools\\Assets\\Chicken\\RiggedChicken.max") #select #useSceneMtlDups )
+	
+	on btn_import pressed do
+	(
+		case ddl_import.selected of
+		(
+			"Chicken": mergemaxfile (userscriptPath + "\\RocketMaxTools\\Assets\\Chicken\\RiggedChicken.max") #select #useSceneMtlDups
+			"FX": importFX()
+			"Grates": mergemaxfile (userscriptPath + "\\RocketMaxTools\\Assets\\Grates\\Grates.max") #select #useSceneMtlDups
+			"Lines": mergemaxfile (userscriptPath + "\\RocketMaxTools\\Assets\\Lines\\Lines.max") #select #useSceneMtlDups
+			"Abattoir Lines": mergemaxfile (userscriptPath + "\\RocketMaxTools\\Assets\\Lines\\AbattoirLines.max") #select #useSceneMtlDups
+
+		)
+	)
 	
 	--Create Layers Script-- 
 	on CreateLayers pressed do
