@@ -1,13 +1,18 @@
 --fn setAllFaceID 
 
-"BBB-prefab_FireHose_Glass-mesh_42_1"
-"BBB-prefab_FireExtinguisherAlpha-mesh_43_0"
+-- "BBB-prefab_FireHose_Glass-mesh_42_1"
+-- "BBB-prefab_FireExtinguisherAlpha-mesh_43_0"
 
-"BBB-prefab_AbattoirWindowLarge01-Glass-Right-mesh_31_0"
-"BBB-prefab_AbattoirWindowLarge01-Glass-Left-mesh_29_0"
-"BBB-prefab_AbattoirWindowLarge01-Glass-Mid-mesh_30_0"
-"BBB-prefab_AbattoirWindowSmallClear01-Glass-Left-mesh_35_0"
-"BBB-prefab_AbattoirWindowSmall01-Glass-Left-mesh_35_0"
+-- "BBB-prefab_AbattoirWindowLarge01-Glass-Right-mesh_31_0"
+-- "BBB-prefab_AbattoirWindowLarge01-Glass-Left-mesh_29_0"
+-- "BBB-prefab_AbattoirWindowLarge01-Glass-Mid-mesh_30_0"
+-- "BBB-prefab_AbattoirWindowSmallClear01-Glass-Left-mesh_35_0"
+-- "BBB-prefab_AbattoirWindowSmall01-Glass-Left-mesh_35_0"
+
+--Ladders id: 500
+--Glass  id: 600
+--FireExtAlpha: 700
+
 
 fn sendtoLayerByName objName layerName =
 (
@@ -33,6 +38,35 @@ fn Detach matid objname =
 	polyop.detachFaces $ selectedFaces asNode:true name: objname
 )
 
+fn collectGlassObj =
+(
+	a = #()
+	
+	for obj in objects do
+	(
+		if obj.name == "*Glass-*" then
+		(
+			append a getNodeByName(obj.name)
+		)
+	)
+	return a
+)
+
+fn assignOthersMatID =
+(
+	for obj in objects do
+	(
+		if obj.name == "*Glass-*" then
+		(
+			polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 600
+		)
+		
+		if obj.name == "*FireExtinguisherAlpha-*" then
+		(
+			polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 700
+		)
+	)	
+)
 
 fn assignDoorMatID =
 (
@@ -171,6 +205,11 @@ fn splitDetachables =
 	--Auto doors
 )
 
+fn splitOthers =
+(
+	Detach 600 layer "Glass"
+	Detach 700 layer "FireExtAlpha"
+)
 
 --assign unique mat ids to detachable objects
 --merge obj, uv-pack, 

@@ -47,7 +47,7 @@ mr.DistributedEnable = false
 ::fileIn( userscriptPath + "\\RocketMaxTools\DeleteEmptyObjects.ms")
 ::fileIn( userscriptPath + "\\RocketMaxTools\CreateFX.ms")
 ::fileIn( userscriptPath + "\\RocketMaxTools\TransferUV.ms")
-
+::fileIn( userscriptPath + "\\RocketMaxTools\AutoDetachSetup.ms")
 
 fn selSomething =
 (
