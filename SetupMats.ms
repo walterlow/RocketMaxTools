@@ -188,9 +188,9 @@ fn setupDX9Mats =
 	(
 	chicken = meditMaterials[16] = DirectX_9_Shader ()
 	chicken.name = "Chicken"
-	chicken.effectfile = shader_path + "object-dynamic.fx"
+	chicken.effectfile = shader_path + "character-background.fx"
 	chicken.technique = 0
-	chicken.renderMaterial = StandardMaterial name:"object-dynamic_renderstyle"
+	chicken.renderMaterial = StandardMaterial name:"character-background_renderstyle"
 	if (existFile (diffuseTex)) do (chicken.TexDiffuse = openBitMap (diffuseTex) ) 
 	if (existFile (bumpTex)) do (chicken.TexBump = openBitMap (bumpTex) ) 
 	chicken.Shininess = 30

@@ -1,6 +1,7 @@
 --%localappdata%\Autodesk\3dsMax\2011 - 64bit\ENU\scripts
 
-try(cui.UnRegisterDialogBar MainFloater; closeRolloutFloater MainFloater) catch()
+-- try(cui.UnRegisterDialogBar MainFloater; closeRolloutFloater MainFloater) catch()
+try(closeRolloutFloater MainFloater) catch()
 try(destroyDialog ro_TransferUV) catch()
 try(destroyDialog dial_doorHelper) catch()
 -----------------------------------------------
@@ -163,7 +164,8 @@ Rollout Menu02 "Geometry Tools"
 	button btn_selectsimilar "Select Similar" tooltip:"Select Similar elements" pos:[8,80] width:100 
 	button btn_detachFaces "Quick Detach" tooltip:"Detach selected faces as object" pos:[108,80] width:100
 	button btn_autoDoors "Auto Doors"  pos:[8,102] width: 100
-	button btn_doorHelper "Door Helper" tooltip:"Launch door helper tool"  pos:[108,102]   width: 100
+	button btn_doorHelper "Door Helper" tooltip:"Launch door helper tool"  pos:[108,102]  width: 100
+	button btn_doorHelper2 "D++" pos:[208,80] width:34 height: 43 
 	)
 	
 
@@ -279,6 +281,9 @@ Rollout dial_doorHelper "Door Helper" width:200
 	)
 
 	on btn_doorHelper pressed do ( try(destroyDialog dial_doorHelper)catch(); createDialog dial_doorHelper)
+	
+	on btn_doorHelper2 pressed do ( try(destroyDialog ro_doorHelper2)catch(); createDialog ro_doorHelper2)
+	
 	on btn_autoDoors pressed do (AutoDoors())
 	
 	on btn_xform pressed do (ResetXFPoly())
@@ -378,7 +383,7 @@ addRollout Menu03 MainFloater
 addRollout Menu04 MainFloater
 addRollout Rocketbirds MainFloater
 
-cui.RegisterDialogBar MainFloater style: #(#cui_dock_left, #cui_dock_right, #cui_floatable, #cui_handles) 
+--cui.RegisterDialogBar MainFloater style: #(#cui_dock_left, #cui_dock_right, #cui_floatable, #cui_handles) 
 
 macroScript RocketMaxTools category:"RocketBirds"
 tooltip:"RocketMaxTools" --Icon:#("RocketMaxTools",1)

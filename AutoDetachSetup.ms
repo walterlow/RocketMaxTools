@@ -56,13 +56,15 @@ fn assignOthersMatID =
 (
 	for obj in objects do
 	(
-		if obj.name == "*Glass-*" then
+		if matchPattern obj.name pattern: "*Glass-*" then
 		(
+			print obj.name
 			polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 600
 		)
 		
-		if obj.name == "*FireExtinguisherAlpha-*" then
+		if matchPattern obj.name pattern: "*FireExtinguisherAlpha-*" then
 		(
+			print obj.name
 			polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 700
 		)
 	)	
@@ -111,6 +113,17 @@ fn assignDoorMatID =
 			"Exit7_Wall" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 407
 		)
 	)
+	print "Doors marked..."
+)
+
+fn markLadders = 
+(
+	selectedFaces = polyOp.getFaceSelection $
+	if ( not selectedFaces.isEmpty) then polyop.setFaceMatID $ selectedFaces 500
+	else
+	(
+	)
+	subobjectlevel = 0
 )
 
 fn BulkDoorDetach =	
@@ -202,13 +215,45 @@ fn splitDetachables =
 	--replace with del empty objects
 	delete (for obj in Geometry where classof obj == Editable_Poly and polyop.getNumFaces obj == 0 collect obj)
 	
-	--Auto doors
+	--AutoDoors()
 )
 
 fn splitOthers =
 (
-	Detach 600 layer "Glass"
-	Detach 700 layer "FireExtAlpha"
+	Detach 600 "Glass"
+	Detach 700 "FireExtAlpha"
+	
+	sendtoLayerByName "Glass" "Main"
+	sendtoLayerByName "FireExtAlpha" "Main"
+)
+
+fn splitLadders =
+(
+	Detach 500 "Ladders"
+	sendtoLayerByName "Ladders" "Ladders"
+)
+
+Rollout ro_doorHelper2 "Detachables Helper" 
+(
+	group ""(
+	button btn_markDoorsAndOthers "1.Assign Door & Others ids"
+	button btn_markLadders "2.Select and mark Ladders"
+	)
+	
+	group ""(
+	button btn_bulkDoorDetach "3.Detach Bulk Doors"
+	button btn_singleDoorDetach "4.Split Bulk Doors"
+	
+	button btn_splitOthers "5.Detach Others" tooltip: "Split Glass, FireExtAlpha.."
+	button btn_splitLadders "6.Detach Ladders"
+	)
+	on btn_markDoorsAndOthers pressed do ( assignDoorMatID(); assignOthersMatID() )
+	on btn_markLadders pressed do ( markLadders() )
+	on btn_bulkDoorDetach pressed do ( BulkDoorDetach() )
+	on btn_singleDoorDetach pressed do ( splitDetachables() )
+	
+	on btn_splitOthers pressed do ( splitOthers() )
+	on btn_splitLadders pressed do ( splitLadders() )
 )
 
 --assign unique mat ids to detachable objects

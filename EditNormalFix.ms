@@ -2,7 +2,7 @@ fn EditNormalFix =
 (
 	smoothMod = Smooth()
 	smoothMod.autosmooth = on
-	smoothMod.threshold = 60
+	smoothMod.threshold = 180
 	obj = getCurrentSelection()
 	
 	if (obj.count != 0) then
