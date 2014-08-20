@@ -1,7 +1,8 @@
 fn EditNormalFix =
 (
 	smoothMod = Smooth()
-	smoothMod.autosmooth = on
+	--smoothMod.autosmooth = on
+	smoothMod.smoothingBits = 1
 	smoothMod.threshold = 180
 	obj = getCurrentSelection()
 	
