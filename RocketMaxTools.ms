@@ -49,12 +49,13 @@ mr.DistributedEnable = false
 ::fileIn( userscriptPath + "\\RocketMaxTools\CreateFX.ms")
 ::fileIn( userscriptPath + "\\RocketMaxTools\TransferUV.ms")
 ::fileIn( userscriptPath + "\\RocketMaxTools\AutoDetachSetup.ms")
+::fileIn( userscriptPath + "\\RocketMaxTools\BackupTool.ms")
+
 
 fn selSomething =
 (
 	messageBox("Select Something!")
 )
-
 
 
 Rollout Menu01 "Layering Tools"
@@ -344,8 +345,9 @@ Rollout Menu03 "Bake Tools"
 
 Rollout Menu04 "File Tools"
 (
-	edittext et_projName "Filename: " text: "L99-S99" fieldWidth:100 height:20 across:2
-	button btn_createProj "Create" tooltip:"Makes project folder and saves file" pos:[180, 7]
+	edittext et_projName "Filename: " text: "L99-S99" fieldWidth:60 height:20 across:3
+	button btn_createProj "Create" tooltip:"Makes project folder and saves file" pos:[130, 7]
+	button btn_backup "Backup" toolip:"Backup a file in working folder" pos:[180, 7]
 	button btn_save2copies "Save 2 Copies" tooltip:"Save current and another copy in Screens" across:3
 	button btn_exportDAE "Export DAE" tooltip:"Export selected as DAE" 
 	button btn_buildandrun "Build & Run" tooltip:"Build then Press any key to run"
@@ -356,6 +358,8 @@ Rollout Menu04 "File Tools"
 		makeDir (working_path + et_projName.text )
 		savemaxFile (working_path + et_projName.text + "\\" + et_projName.text + ".max")
 	)
+	
+	on btn_backup pressed do ( Backup() )
 	
 	on btn_save2copies pressed do (saveCurrentFinal()) 
 		

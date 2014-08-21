@@ -1,3 +1,4 @@
+fn Backup =
 (
 	
 raw_mfn = maxfilename 
@@ -5,47 +6,56 @@ mfn = getfilenamefile maxfilename
 
 working_path = "C:\\Projects\\Cow2\\Assets\\Screens\\working\\" 
 
-filelist = getfiles( working_path + mfn + "\\" + "*_Backup_*.max" )
+fList = getfiles( working_path + mfn + "\\" + "*_Backup_*.max" )
+fCount = 0
 
 	
-if filelist.count == 0 then
+if fList.count == 0 then
 (
-	--save first backup version
-	print "save first backup version"
-	filename = working_path + mfn + "\\" + mfn + "_Backup_" + "001"+ ".max"
-	savemaxfile filename usenewfile: false
+	fCount += 1
+	fVer = formattedprint fCount format: ".3d"
+	fOut = working_path + mfn + "\\" + mfn + "_Backup_" + fVer+ ".max"
+	savemaxfile fOut usenewfile:false
+	print ("Saved: " + fOut)
 )
 else
 (
-	print "proceed to backup version incrementally"
-)
-
--- print filelist
-versions = #()
+	-- print fList
+	a = #()
+		
+	for i=1 to fList.count do
+	(
+		fFilter = filterstring fList[i] "_"
+		ver = substring fFilter[3] (fFilter[3].count-6) 3
+		append a ver
+	)
 	
-for i=1 to filelist.count do
-(
-	filefilter = filterstring filelist[i] "_"
-	ver = substring filefilter[3] (filefilter[3].count-6) 3
-	append versions ver
+	sort a
+	fCount = a[a.count] as integer
+	
+	fCount += 1
+	fVer = formattedprint fCount format: ".3d"
+	
+	fOut = working_path + mfn + "\\" + mfn + "_Backup_" + fVer+ ".max"
+	savemaxfile fOut usenewfile: false
+	print ("Saved: " + fOut)
 )
 
-sort versions
-print "Latest version: " +  versions[versions.count]
 
 
 
 
--- filefilter = filterstring file "_"
--- ver = filefilter[2]
--- append filelist ver
 
--- append filelist ""
--- append filelist "006"
--- append filelist "003"
+-- fFilter = filterstring file "_"
+-- ver = fFilter[2]
+-- append fList ver
 
--- sort filelist
+-- append fList ""
+-- append fList "006"
+-- append fList "003"
 
--- filelist[filelist.count]
+-- sort fList
+
+-- fList[fList.count]
 
 )
