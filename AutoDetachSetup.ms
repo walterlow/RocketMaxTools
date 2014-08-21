@@ -67,6 +67,24 @@ fn assignOthersMatID =
 			print obj.name
 			polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 700
 		)
+		
+		if matchPattern obj.name pattern: "Glass" then
+		(
+			print obj.name
+			polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 600
+		)
+		
+		if matchPattern obj.name pattern: "FireExtAlpha" then
+		(
+			print obj.name
+			polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 700
+		)
+		
+		if matchPattern obj.name pattern: "*Ladder*" then
+		(
+			print obj.name
+			polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 500
+		)
 	)	
 )
 
@@ -247,7 +265,15 @@ Rollout ro_doorHelper2 "Detachables Helper"
 	button btn_splitOthers "5.Detach Others" tooltip: "Split Glass, FireExtAlpha.."
 	button btn_splitLadders "6.Detach Ladders"
 	)
-	on btn_markDoorsAndOthers pressed do ( assignDoorMatID(); assignOthersMatID() )
+	on btn_markDoorsAndOthers pressed do
+	(
+		for obj in selection do
+		(
+			if sceneMaterials["Main"] != undefined do obj.material = sceneMaterials["Main"]
+		)
+		assignDoorMatID()
+		assignOthersMatID() 
+	)
 	on btn_markLadders pressed do ( markLadders() )
 	on btn_bulkDoorDetach pressed do ( BulkDoorDetach() )
 	on btn_singleDoorDetach pressed do ( splitDetachables() )
