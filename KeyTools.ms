@@ -14,17 +14,19 @@ selkeys = selectKeys $.controller
 moveKeys $.controller -62f #selection
 
 
-maxOps.cloneNodes $ cloneType:#copy newNodes:&nnl
-select nnl
-for i = 1 to nnl.count do
-(
-	selkeys = selectKeys nnl[i].controller
-	moveKeys nnl[i].controller -62.5 #selection
-	--deselectKeys nnl[i].controller
-)
 
--- for obj in selection do
--- (
--- 	selkeys = selectKeys obj.controller
--- 	moveKeys obj.controller -62f #selection
--- )
+
+
+/* for obj in selection do
+(
+	selkeys = selectKeys obj.controller
+	moveKeys obj.controller -62f #selection
+)
+ */
+
+$.position.controller = Path_Constraint()
+
+
+selkeys = selectKeys $.controller
+moveKeys $.controller -20 #selection
+
