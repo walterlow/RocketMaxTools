@@ -50,6 +50,7 @@ mr.DistributedEnable = false
 ::fileIn( userscriptPath + "\\RocketMaxTools\TransferUV.ms")
 ::fileIn( userscriptPath + "\\RocketMaxTools\AutoDetachSetup.ms")
 ::fileIn( userscriptPath + "\\RocketMaxTools\BackupTool.ms")
+::fileIn( userscriptPath + "\\RocketMaxTools\KeyTools.ms")
 
 
 fn selSomething =
@@ -169,7 +170,12 @@ Rollout Menu02 "Geometry Tools"
 	button btn_doorHelper2 "D++" pos:[208,80] width:34 height: 43 
 	)
 	
-
+	group "Anim Helper"(
+		
+		button btn_animHelper "Animation Helper" pos:[8,150] 
+	)
+	
+	on btn_animHelper pressed do ( try(destroyDialog ro_animHelper) catch(); createDialog ro_animHelper)
 	
 	-------------------------------------------------------------------------------------------------------------------------
 Rollout dial_doorHelper "Door Helper" width:200
@@ -368,6 +374,8 @@ Rollout Menu04 "File Tools"
 	on btn_buildandrun pressed do (BuildRun())
 		
 ) --endrollout
+
+
 
 
 Rollout Rocketbirds "Rocketbirds"
