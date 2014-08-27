@@ -202,6 +202,7 @@ fn setupMaxMats =
 (
 	mainMat = meditMaterials[1] = StandardMaterial name:"Main" showInViewport:true
 	mainMat.diffuseMapEnable = on
+	mainMat.twoSided = on
 	mainMat.diffuseMap = Bitmaptexture fileName:  (diffuseTex)
 	--meditMaterials[1][#Maps][#Diffuse_Color__Map__0__BARK5_jpg].alphaSource = 2
 	
@@ -218,6 +219,7 @@ fn setupMaxMats =
 	
 	glassMat = meditMaterials[3] = StandardMaterial name:"Glass" showInViewport:true
 	glassMat.diffuseMapEnable = on
+	glassMat.twoSided = on
 	glassMat.diffuseMap = Bitmaptexture fileName:  (alphaTex)
 	
 	glassMat.specularLevelMapEnable = on
