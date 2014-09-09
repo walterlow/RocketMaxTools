@@ -3,8 +3,6 @@
 -- global shader_path = "C:\\Projects\\Cow2\\Assets\\Shaders\\"
 -- global ext = ".png"
 
---maxFileName
---getFilenameFile maxFileName 
 global baseTexName
 
 global diffuseTex
@@ -22,41 +20,47 @@ global decalTex
 
 fn existFile fname = (getfiles fname).count != 0
 
---if (existFile (final_path+diffuseTex)) do (print "File exist!") 
-	
--- fn SetBitmap fx slot fname =
--- (
--- 	
--- 	if (getfiles fname).count != 0 then
--- 	(
--- 		fx.&slot = openBitmap (fname)
--- 	)
--- 	else
--- 	(
--- 		print fname + " does not exist!"
--- 	)
--- )
+fn createDX9Mat matname: mslot: \
+						effectFile: \
+						tdiff: \
+						tbump: \
+						tlightmap: \
+						technique: \
+						Shininess: \
+						BloodWallDepth: \
+						BloodBlend: \
+						ShadowFactor: \
+						HighlightMultiplier: \
+						mBlend: \
+						Show_Transparency: \
+						renderMaterial: =
+(
+	mat = meditMaterials[mslot] = DirectX_9_Shader ()
+	mat.name = matname
+
+	if isProperty mat #TexDiffuse do ( if (existFile (tdiff)) do (mat.TexDiffuse = openBitMap (tdiff) ) )
+	if isProperty mat #TexBump do ( if (existFile (tbump)) do (mat.TexBump = openBitMap (tbump) )  )
+	if isProperty mat #TexLightMap do ( if (existFile (tlightmap)) do (mat.TexLightMap = openBitMap (tlightmap) ) )
+
+	if isProperty mat #effectFile do (mat.effectfile = shader_path + effectFile)
+	if isProperty mat #technique do (mat.technique = technique)
+	if isProperty mat #Shininess do (mat.Shininess = Shininess)
+	if isProperty mat #BloodWallDepth do (mat.BloodWallDepth = BloodWallDepth)
+	if isProperty mat #BloodBlend do  (mat.BloodBlend = BloodBlend)
+	if isProperty mat #ShadowFactor do (mat.ShadowFactor = ShadowFactor)
+	if isProperty mat #HighlightMultiplier do (mat.HighlightMultiplier = HighlightMultiplier)
+	if isProperty mat #Blend do  (mat.Blend = mBlend)
+	if isProperty mat #Show_Transparency do (mat.Show_Transparency = Show_Transparency)
+	if isProperty mat #renderMaterial do (mat.renderMaterial = StandardMaterial name:renderMaterial)
+)
+
+  
+--createDX9Mat matname:"test" mslot:7 effectFile:"simple-2uv.fx" tdiff:diffuseTex tbump:bumpTex tlightmap:lightmapTex \
+--technique:0 Shininess:30 BloodWallDepth:2.5 BloodBlend:1.75 ShadowFactor:0.25 HighlightMultiplier:0.1
+
 
 fn setupDX9Mats = 
 (
-	--getProperty() that access parameter block can be handy if your material is a C++ plugin or a scripted material that extends DirectX 9 Shader material.
-	--getPropNames Node
-	--getProperty  meditmaterials[1]  #opacity
--- 	local shader_path = "C:\\Projects\\Cow2\\Assets\\Shaders\\"
-	--macros.run "Medit Tools" "clear_medit_slots"
-	
-	baseTexName = getFilenameFile maxFileName
-	diffuseTex = final_path + baseTexName + "-A" + ext
-	speclevelTex = final_path + baseTexName + "-A" + "_S" + ext
-	glassSpeclevelTex = final_path + baseTexName + "-B" + "_S" + ext
-	bumpnormalTex = final_path + baseTexName + "-A" +"_N" + ext
-
-	alphaTex = final_path + baseTexName + "-B" + ext
-	bumpTex = final_path + baseTexName + "-C" + ext
-	bump2Tex = final_path + baseTexName + "-D" + ext
-	lightmapTex = final_path + baseTexName + "-E" + ext
-	silhouetteTex = final_path + baseTexName + "-F" + ext
-	decalTex = final_path + baseTexName + "-G" + ext
 	
 	if sceneMaterials["Main_2UV"] == undefined then
 	(
@@ -83,7 +87,6 @@ fn setupDX9Mats =
 	simple.effectfile = shader_path + "simple.fx"
 	simple.technique = 0
 	simple.renderMaterial = StandardMaterial name:"simple_renderstyle"
-	--simple.TexDiffuse = openBitMap (diffuseTex)
 	if (existFile (diffuseTex)) do (simple.TexDiffuse = openBitMap (diffuseTex) ) 
 	)
 	else ( meditMaterials[8] =  sceneMaterials["Simple"] )
@@ -204,7 +207,7 @@ fn setupMaxMats =
 	mainMat.diffuseMapEnable = on
 	mainMat.twoSided = on
 	mainMat.diffuseMap = Bitmaptexture fileName:  (diffuseTex)
-	--meditMaterials[1][#Maps][#Diffuse_Color__Map__0__BARK5_jpg].alphaSource = 2
+	
 	
 	mainMat.specularLevelMapEnable = on
 	mainMat.specularLevelMap = Bitmaptexture fileName: (speclevelTex)
@@ -213,7 +216,6 @@ fn setupMaxMats =
 	mainMat.bumpMap = Normal_Bump () --Normal_Bump name:"FFF"
 	mainMat.bumpMap.normal_map = Bitmaptexture fileName: (bumpnormalTex) --change bitmaptexure name?
 	mainMat.bumpMapAmount = 100
-	--meditMaterials[1][#Maps][#Bump__Map__1____Normal_Bump].normal_map = Bitmaptexture fileName:"C:\Users\walter\Documents\3dsMax\sceneassets\images\BWom0001-M3-Body-N.jpg"
 	
 	------
 	
@@ -225,9 +227,6 @@ fn setupMaxMats =
 	glassMat.specularLevelMapEnable = on
 	glassMat.specularLevelMap = Bitmaptexture fileName: (glassSpeclevelTex)
 	
-	--glassMat.bumpMapEnable = on
-	--glassMat.bumpMap = Normal_Bump () --Normal_Bump name:"FFF"
-	--glassMat.bumpMap.normal_map = Bitmaptexture fileName: (final_path + bumpnormalTex) --change bitmaptexure name?
 	glassMat.bumpMapAmount = 100
 	
 )
@@ -236,12 +235,24 @@ fn SetupMats =
 (
 	if(getFilenameFile maxFileName != "") then
 	(
-		--call dx9 mats first to init variables in dx9 fn
-	setupDX9Mats()
-	setupMaxMats()
+		baseTexName = getFilenameFile maxFileName
+		diffuseTex = final_path + baseTexName + "-A" + ext
+		speclevelTex = final_path + baseTexName + "-A" + "_S" + ext
+		glassSpeclevelTex = final_path + baseTexName + "-B" + "_S" + ext
+		bumpnormalTex = final_path + baseTexName + "-A" +"_N" + ext
+
+		alphaTex = final_path + baseTexName + "-B" + ext
+		bumpTex = final_path + baseTexName + "-C" + ext
+		bump2Tex = final_path + baseTexName + "-D" + ext
+		lightmapTex = final_path + baseTexName + "-E" + ext
+		silhouetteTex = final_path + baseTexName + "-F" + ext
+		decalTex = final_path + baseTexName + "-G" + ext
+		
+		setupDX9Mats()
+		setupMaxMats()
 	)
 	else
-	(messagebox("Please save and name your file first."))
+		(messagebox("Please save and name your file first."))
 )
 
 fn CleanMats =

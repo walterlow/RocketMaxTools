@@ -230,7 +230,6 @@ fn splitDetachables =
 		Detach (id as integer) layer
 	)
 	
-	--replace with del empty objects
 	delete (for obj in Geometry where classof obj == Editable_Poly and polyop.getNumFaces obj == 0 collect obj)
 	
 	--AutoDoors()
@@ -281,13 +280,3 @@ Rollout ro_doorHelper2 "Detachables Helper"
 	on btn_splitOthers pressed do ( splitOthers() )
 	on btn_splitLadders pressed do ( splitLadders() )
 )
-
---assign unique mat ids to detachable objects
---merge obj, uv-pack, 
-
-
---do the magic here--
---select by material, detach faces, send to layer
-
-
---bake
