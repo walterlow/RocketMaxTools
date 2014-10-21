@@ -4,13 +4,16 @@ fn CenPivot =
 	if (selection.count != 0) then (
 	
 		for obj in selection do
-		if obj.pivot != obj.center then (
-		 obj.pivot = obj.center
-		) 
+			if obj.pivot != obj.center then (
+			obj.pivot = obj.center
+			) 
+			
 		--else (
 		 --obj.pivot = obj.center
 		-- obj.pivot.z = obj.min.z
 		--)
+		
+	
 
 		if (subobjectlevel == 1) then
 		(
@@ -36,4 +39,12 @@ fn CenPivot =
 		
 	)
 	redrawviews()
+)
+
+fn centerPivotWorld =
+(
+	for obj in selection do
+	(
+		obj.pivot = [0,0,0]
+	)
 )

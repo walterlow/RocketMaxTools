@@ -157,7 +157,7 @@ Rollout Menu02 "Geometry Tools"
 	
 	on btn_xform pressed do (ResetXFPoly())
 	on btn_weldVertices pressed do (WeldVertices())
-	on btn_centerPivot pressed do (CenPivot())
+	on btn_centerPivot pressed do (CenPivot(); if keyboard.controlPressed do centerPivotWorld() )
 	on btn_oneobject pressed do(OneObject())
 	on btn_normalfix pressed do (EditNormalFix())
 	
