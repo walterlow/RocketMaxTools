@@ -15,7 +15,8 @@ fn sendtoLayer obj layerName =
 					theLayer.addNode o
 					)
 		)
-		print ( "Selection moved to \" " + layerName +"\" Layer")
+		format "Selection moved to % \n" layerName
+		--print ( "Selection moved to \" " + layerName +"\" Layer")
 	) else
 	(
 		messagebox ("Please select something!")

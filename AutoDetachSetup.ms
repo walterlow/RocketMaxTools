@@ -27,7 +27,7 @@ fn sendtoLayerByName objName layerName =
 		theLayer.addNode ( getNodeByName objName)
 	)
 		
-	print ( "Selection moved to \" " + layerName +"\" Layer")
+	format "Selection moved to % \n" layerName
 )
 
 

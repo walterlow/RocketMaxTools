@@ -1,6 +1,6 @@
 -- global working_path = "C:\\Projects\\Cow2\\Assets\\Screens\\working\\" 
 -- global final_path =  "C:\\Projects\\Cow2\\Assets\\Screens\\"
--- global shader_path = "C:\\Projects\\Cow2\\Assets\\Shaders\\"
+-- global ::shader_path = "C:\\Projects\\Cow2\\Assets\\Shaders\\"
 -- global ext = ".png"
 
 global baseTexName
@@ -20,219 +20,210 @@ global decalTex
 
 fn existFile fname = (getfiles fname).count != 0
 
-fn createDX9Mat matname: mslot: \
-						effectFile: \
-						tdiff: \
-						tbump: \
-						tlightmap: \
-						technique: \
-						Shininess: \
-						BloodWallDepth: \
-						BloodBlend: \
-						ShadowFactor: \
-						HighlightMultiplier: \
-						mBlend: \
-						Show_Transparency: \
-						renderMaterial: =
-(
-	mat = meditMaterials[mslot] = DirectX_9_Shader ()
-	mat.name = matname
-
-	if isProperty mat #TexDiffuse do ( if (existFile (tdiff)) do (mat.TexDiffuse = openBitMap (tdiff) ) )
-	if isProperty mat #TexBump do ( if (existFile (tbump)) do (mat.TexBump = openBitMap (tbump) )  )
-	if isProperty mat #TexLightMap do ( if (existFile (tlightmap)) do (mat.TexLightMap = openBitMap (tlightmap) ) )
-
-	if isProperty mat #effectFile do (mat.effectfile = shader_path + effectFile)
-	if isProperty mat #technique do (mat.technique = technique)
-	if isProperty mat #Shininess do (mat.Shininess = Shininess)
-	if isProperty mat #BloodWallDepth do (mat.BloodWallDepth = BloodWallDepth)
-	if isProperty mat #BloodBlend do  (mat.BloodBlend = BloodBlend)
-	if isProperty mat #ShadowFactor do (mat.ShadowFactor = ShadowFactor)
-	if isProperty mat #HighlightMultiplier do (mat.HighlightMultiplier = HighlightMultiplier)
-	if isProperty mat #Blend do  (mat.Blend = mBlend)
-	if isProperty mat #Show_Transparency do (mat.Show_Transparency = Show_Transparency)
-	if isProperty mat #renderMaterial do (mat.renderMaterial = StandardMaterial name:renderMaterial)
-)
-
-  
---createDX9Mat matname:"test" mslot:7 effectFile:"simple-2uv.fx" tdiff:diffuseTex tbump:bumpTex tlightmap:lightmapTex \
---technique:0 Shininess:30 BloodWallDepth:2.5 BloodBlend:1.75 ShadowFactor:0.25 HighlightMultiplier:0.1
-
-
 fn setupDX9Mats = 
 (
 	
 	if sceneMaterials["Main_2UV"] == undefined then
 	(
-		main2uv = meditMaterials[7] = DirectX_9_Shader ()
-		main2uv.name = "Main_2UV"  --eg, Simple_2UV
-		main2uv.effectfile = shader_path + "simple-2uv.fx"
-		main2uv.technique = 0
-		main2uv.renderMaterial = StandardMaterial name:"simple-2uv_renderstyle"
-		main2uv.Shininess = 30
-		main2uv.BloodWallDepth = 2.5
-		main2uv.BloodBlend = 1.75
-		main2uv.ShadowFactor = 0.25
-		main2uv.HighlightMultiplier = 0.1
-		if (existFile (diffuseTex)) do (main2uv.TexDiffuse = openBitMap (diffuseTex) ) 
-		if (existFile (bumpTex)) do (main2uv.TexBump = openBitMap (bumpTex) ) 
-		if (existFile (lightmapTex)) do (main2uv.TexLightMap = openBitMap (lightmapTex) ) 
+		meditMaterials[7] = DirectX_9_Shader ()
+		meditMaterials[7].name = "Main_2UV"  --eg, Simple_2UV
+		meditMaterials[7].effectfile = ::shader_path + "simple-2uv.fx"
+		meditMaterials[7].technique = 0
+		meditMaterials[7].renderMaterial = StandardMaterial name:"simple-2uv_renderstyle"
+		meditMaterials[7].Shininess = 30
+		meditMaterials[7].BloodWallDepth = 2.5
+		meditMaterials[7].BloodBlend = 1.75
+		meditMaterials[7].ShadowFactor = 0.25
+		meditMaterials[7].HighlightMultiplier = 0.1
+		if (existFile (diffuseTex)) do (meditMaterials[7].TexDiffuse = openBitMap (diffuseTex) ) 
+		if (existFile (bumpTex)) do (meditMaterials[7].TexBump = openBitMap (bumpTex) ) 
+		if (existFile (lightmapTex)) do (meditMaterials[7].TexLightMap = openBitMap (lightmapTex) ) 
 	)
 	else ( meditMaterials[7] =  sceneMaterials["Main_2UV"] )
 		
 	if sceneMaterials["Simple"] == undefined then
 	(
-	simple = meditMaterials[8] = DirectX_9_Shader ()
-	simple.name = "Simple"  --eg, Simple_2UV
-	simple.effectfile = shader_path + "simple.fx"
-	simple.technique = 0
-	simple.renderMaterial = StandardMaterial name:"simple_renderstyle"
-	if (existFile (diffuseTex)) do (simple.TexDiffuse = openBitMap (diffuseTex) ) 
+	meditMaterials[8] = DirectX_9_Shader ()
+	meditMaterials[8].name = "Simple"  --eg, Simple_2UV
+	meditMaterials[8].effectfile = ::shader_path + "simple.fx"
+	meditMaterials[8].technique = 0
+	meditMaterials[8].renderMaterial = StandardMaterial name:"simple_renderstyle"
+	if (existFile (diffuseTex)) do (meditMaterials[8].TexDiffuse = openBitMap (diffuseTex) ) 
 	)
 	else ( meditMaterials[8] =  sceneMaterials["Simple"] )
 		
 	
 	if sceneMaterials["SimpleCastShadow_2UV"] == undefined then
 	(
-	simple2uvcs = meditMaterials[14] = DirectX_9_Shader ()
-	simple2uvcs.name = "SimpleCastShadow_2UV"  --eg, Simple_2UV
-	simple2uvcs.effectfile = shader_path + "simple-2uv-castshadow.fx"
-	simple2uvcs.technique = 0
-	simple2uvcs.renderMaterial = StandardMaterial name:"simple_renderstyle"
-	simple2uvcs.Shininess = 30
-	simple2uvcs.BloodWallDepth = 2.5
-	simple2uvcs.BloodBlend = 1.75
-	simple2uvcs.ShadowFactor = 0.25
-	simple2uvcs.HighlightMultiplier = 0.1
-	if (existFile (diffuseTex)) do (simple2uvcs.TexDiffuse = openBitMap (diffuseTex) ) 
-	if (existFile (bumpTex)) do (simple2uvcs.TexBump = openBitMap (bumpTex) ) 
-	if (existFile (lightmapTex)) do (simple2uvcs.TexLightMap = openBitMap (lightmapTex) ) 
+	meditMaterials[14] = DirectX_9_Shader ()
+	meditMaterials[14].name = "SimpleCastShadow_2UV"  --eg, Simple_2UV
+	meditMaterials[14].effectfile = ::shader_path + "simple-2uv-castshadow.fx"
+	meditMaterials[14].technique = 0
+	meditMaterials[14].renderMaterial = StandardMaterial name:"simple_renderstyle"
+	meditMaterials[14].Shininess = 30
+	meditMaterials[14].BloodWallDepth = 2.5
+	meditMaterials[14].BloodBlend = 1.75
+	meditMaterials[14].ShadowFactor = 0.25
+	meditMaterials[14].HighlightMultiplier = 0.1
+	if (existFile (diffuseTex)) do (meditMaterials[14].TexDiffuse = openBitMap (diffuseTex) ) 
+	if (existFile (bumpTex)) do (meditMaterials[14].TexBump = openBitMap (bumpTex) ) 
+	if (existFile (lightmapTex)) do (meditMaterials[14].TexLightMap = openBitMap (lightmapTex) ) 
 	)
 	 else ( meditMaterials[14] =  sceneMaterials["SimpleCastShadow_2UV"] )
 	
 	if sceneMaterials["Silhouette"] == undefined then
 	(
-	silhouette = meditMaterials[9] = DirectX_9_Shader ()
-	silhouette.name = "Silhouette"  --eg, Simple_2UV
-	silhouette.effectfile = shader_path + "silhouette.fx"
-	silhouette.technique = 0
-	silhouette.renderMaterial = StandardMaterial name:"silhouette_renderstyle"
-	if (existFile (silhouetteTex)) do (silhouette.TexDiffuse = openBitMap (silhouetteTex) ) 
+	meditMaterials[9] = meditMaterials[9] = DirectX_9_Shader ()
+	meditMaterials[9].name = "Silhouette"  --eg, Simple_2UV
+	meditMaterials[9].effectfile = ::shader_path + "silhouette.fx"
+	meditMaterials[9].technique = 0
+	meditMaterials[9].renderMaterial = StandardMaterial name:"silhouette_renderstyle"
+	if (existFile (silhouetteTex)) do (meditMaterials[9].TexDiffuse = openBitMap (silhouetteTex) ) 
 	)
 	 else ( meditMaterials[9] =  sceneMaterials["Silhouette"] )
 		
 	if sceneMaterials["Black"] == undefined then
 	(
-	blackfx = meditMaterials[10] = DirectX_9_Shader ()
-	blackfx.name = "Black"  --eg, Simple_2UV
-	blackfx.effectfile = shader_path + "black.fx"
-	blackfx.technique = 0
-	blackfx.renderMaterial = StandardMaterial name:"black_renderstyle"
+	meditMaterials[10] = DirectX_9_Shader ()
+	meditMaterials[10].name = "Black"  --eg, Simple_2UV
+	meditMaterials[10].effectfile = ::shader_path + "black.fx"
+	meditMaterials[10].technique = 0
+	meditMaterials[10].renderMaterial = StandardMaterial name:"black_renderstyle"
 	)
 	 else ( meditMaterials[10] =  sceneMaterials["Black"] )
 		
 	if sceneMaterials["Alpha"] == undefined then
 	(
-	alphafx = meditMaterials[11] = DirectX_9_Shader ()
-	alphafx.name = "Alpha"  --eg, Simple_2UV
-	alphafx.effectfile = shader_path + "simple-alpha.fx"
-	alphafx.technique = 0
-	alphafx.renderMaterial = StandardMaterial name:"simple-alpha_renderstyle"
-	if (existFile (decalTex)) do (alphafx.TexDiffuse = openBitMap (decalTex) ) 
-	alphafx.Blend = 0.7
-	alphafx.Show_Transparency = 0.5
+	meditMaterials[11] = meditMaterials[11] = DirectX_9_Shader ()
+	meditMaterials[11].name = "Alpha"  --eg, Simple_2UV
+	meditMaterials[11].effectfile = ::shader_path + "simple-alpha.fx"
+	meditMaterials[11].technique = 0
+	meditMaterials[11].renderMaterial = StandardMaterial name:"simple-alpha_renderstyle"
+	if (existFile (decalTex)) do (meditMaterials[11].TexDiffuse = openBitMap (decalTex) ) 
+	meditMaterials[11].Blend = 0.7
+	meditMaterials[11].Show_Transparency = 0.5
 	)
 	 else ( meditMaterials[11] =  sceneMaterials["Alpha"] )
 
 	if sceneMaterials["Alpha_2UV"] == undefined then
 	(
-	alpha2uv = meditMaterials[12] = DirectX_9_Shader ()
-	alpha2uv.name = "Alpha_2UV"  --eg, Simple_2UV
-	alpha2uv.effectfile = shader_path + "simple-alpha-2uv.fx"
-	alpha2uv.technique = 0
-	alpha2uv.renderMaterial = StandardMaterial name:"simple-alpha-2uv_renderstyle"
-	if (existFile (alphaTex)) do (alpha2uv.TexDiffuse = openBitMap (alphaTex) ) 
-	if (existFile (bump2Tex)) do (alpha2uv.TexBump = openBitMap (bump2Tex) ) 
-	if (existFile (lightmapTex)) do (alpha2uv.TexLightMap = openBitMap (lightmapTex) ) 
-	alpha2uv.Shininess = 30
-	alpha2uv.BloodWallDepth = 2.5
-	alpha2uv.BloodBlend = 1.75
-	alpha2uv.ShadowFactor = 0.25
-	alpha2uv.HighlightMultiplier = 0.1
+	meditMaterials[12] = DirectX_9_Shader ()
+	meditMaterials[12].name = "Alpha_2UV"  --eg, Simple_2UV
+	meditMaterials[12].effectfile = ::shader_path + "simple-alpha-2uv.fx"
+	meditMaterials[12].technique = 0
+	meditMaterials[12].renderMaterial = StandardMaterial name:"simple-alpha-2uv_renderstyle"
+	if (existFile (alphaTex)) do (meditMaterials[12].TexDiffuse = openBitMap (alphaTex) ) 
+	if (existFile (bump2Tex)) do (meditMaterials[12].TexBump = openBitMap (bump2Tex) ) 
+	if (existFile (lightmapTex)) do (meditMaterials[12].TexLightMap = openBitMap (lightmapTex) ) 
+	meditMaterials[12].Shininess = 30
+	meditMaterials[12].BloodWallDepth = 2.5
+	meditMaterials[12].BloodBlend = 1.75
+	meditMaterials[12].ShadowFactor = 0.25
+	meditMaterials[12].HighlightMultiplier = 0.1
 	)
 	 else ( meditMaterials[12] =  sceneMaterials["Alpha_2UV"] )
 		
 	if sceneMaterials["Multiply"] == undefined then
 	(
-	multiply = meditMaterials[13] = DirectX_9_Shader ()
-	multiply.name = "Multiply"  --eg, Simple_2UV
-	multiply.effectfile = shader_path + "simple-multiply.fx"
-	multiply.technique = 0
-	multiply.renderMaterial = StandardMaterial name:"simple-multiply_renderstyle"
-	if (existFile (decalTex)) do (multiply.TexDiffuse = openBitMap (decalTex) ) 
-	multiply.Blend = 1
+	meditMaterials[13] = DirectX_9_Shader ()
+	meditMaterials[13].name = "Multiply"  --eg, Simple_2UV
+	meditMaterials[13].effectfile = ::shader_path + "simple-multiply.fx"
+	meditMaterials[13].technique = 0
+	meditMaterials[13].renderMaterial = StandardMaterial name:"simple-multiply_renderstyle"
+	if (existFile (decalTex)) do (meditMaterials[13].TexDiffuse = openBitMap (decalTex) ) 
+	meditMaterials[13].Blend = 1
 	)
 	 else ( meditMaterials[13] =  sceneMaterials["Multiply"] )
 	
 	
 	if sceneMaterials["BreakableAlpha"] == undefined then
 	(
-	breakableAlpha = meditMaterials[15] = DirectX_9_Shader ()
-	breakableAlpha.name = "BreakableAlpha"  --eg, Simple_2UV
-	breakableAlpha.effectfile = shader_path + "simple-multiply.fx"
-	breakableAlpha.technique = 0
-	breakableAlpha.renderMaterial = StandardMaterial name:"simple-multiply_renderstyle"
-	if (existFile (diffuseTex)) do (breakableAlpha.TexDiffuse = openBitMap (diffuseTex) ) 
-	breakableAlpha.Blend = 1
+	meditMaterials[15] = DirectX_9_Shader ()
+	meditMaterials[15].name = "BreakableAlpha"  --eg, Simple_2UV
+	meditMaterials[15].effectfile = ::shader_path + "simple-multiply.fx"
+	meditMaterials[15].technique = 0
+	meditMaterials[15].renderMaterial = StandardMaterial name:"simple-multiply_renderstyle"
+	if (existFile (diffuseTex)) do (meditMaterials[15].TexDiffuse = openBitMap (diffuseTex) ) 
+	meditMaterials[15].Blend = 1
 	)
 	 else ( meditMaterials[15] =  sceneMaterials["BreakableAlpha"] )
 	
 	if sceneMaterials["Chicken"] == undefined then
 	(
-	chicken = meditMaterials[16] = DirectX_9_Shader ()
-	chicken.name = "Chicken"
-	chicken.effectfile = shader_path + "character-background.fx"
-	chicken.technique = 0
-	chicken.renderMaterial = StandardMaterial name:"character-background_renderstyle"
-	if (existFile (diffuseTex)) do (chicken.TexDiffuse = openBitMap (diffuseTex) ) 
-	if (existFile (bumpTex)) do (chicken.TexBump = openBitMap (bumpTex) ) 
-	chicken.Shininess = 30
+	meditMaterials[16] = DirectX_9_Shader ()
+	meditMaterials[16].name = "Chicken"
+	meditMaterials[16].effectfile = ::shader_path + "character-background.fx"
+	meditMaterials[16].technique = 0
+	meditMaterials[16].renderMaterial = StandardMaterial name:"character-background_renderstyle"
+	if (existFile (diffuseTex)) do (meditMaterials[16].TexDiffuse = openBitMap (diffuseTex) ) 
+	if (existFile (bumpTex)) do (meditMaterials[16].TexBump = openBitMap (bumpTex) ) 
+	meditMaterials[16].Shininess = 30
 	)
 	 else ( meditMaterials[16] =  sceneMaterials["Chicken"] )
+	
+	if sceneMaterials["Stars"] == undefined then
+	(
+	meditMaterials[17] = DirectX_9_Shader ()
+	meditMaterials[17].name = "Stars"  --eg, Simple_2UV
+	meditMaterials[17].effectfile = ::shader_path + "simple-alpha.fx"
+	meditMaterials[17].technique = 0
+	meditMaterials[17].renderMaterial = StandardMaterial name:"simple-alpha_renderstyle"
+	if (existFile (alphaTex)) do (meditMaterials[17].TexDiffuse = openBitMap (alphaTex) ) 
+	meditMaterials[17].Blend = 1
+	meditMaterials[17].Show_Transparency = 1
+	)
+	 else ( meditMaterials[17] =  sceneMaterials["Stars"] )
+	
+	
+	if sceneMaterials["Terminator"] == undefined then
+	(
+	meditMaterials[18] = meditMaterials[11] = DirectX_9_Shader ()
+	meditMaterials[18].name = "Terminator"  --eg, Simple_2UV
+	meditMaterials[18].effectfile = ::shader_path + "simple-alpha.fx"
+	meditMaterials[18].technique = 0
+	meditMaterials[18].renderMaterial = StandardMaterial name:"simple-alpha_renderstyle"
+	if (existFile (alphaTex)) do (meditMaterials[11].TexDiffuse = openBitMap (alphaTex) ) 
+	meditMaterials[18].Blend = 1
+	meditMaterials[18].Show_Transparency = 1
+	)
+	 else ( meditMaterials[11] =  sceneMaterials["Terminator"] )
+	
 )
 
 fn setupMaxMats = 
 (
-	mainMat = meditMaterials[1] = StandardMaterial name:"Main" showInViewport:true
-	mainMat.diffuseMapEnable = on
-	mainMat.twoSided = on
-	mainMat.diffuseMap = Bitmaptexture fileName:  (diffuseTex)
+	meditMaterials[1] = StandardMaterial name:"Main" showInViewport:true
+	meditMaterials[1].diffuseMapEnable = on
+	meditMaterials[1].twoSided = on
+	meditMaterials[1].diffuseMap = Bitmaptexture fileName:  (diffuseTex)
 	
 	
-	mainMat.specularLevelMapEnable = on
-	mainMat.specularLevelMap = Bitmaptexture fileName: (speclevelTex)
+	meditMaterials[1].specularLevelMapEnable = on
+	meditMaterials[1].specularLevelMap = Bitmaptexture fileName: (speclevelTex)
 	
-	mainMat.bumpMapEnable = on
-	mainMat.bumpMap = Normal_Bump () --Normal_Bump name:"FFF"
-	mainMat.bumpMap.normal_map = Bitmaptexture fileName: (bumpnormalTex) --change bitmaptexure name?
-	mainMat.bumpMapAmount = 100
+	meditMaterials[1].bumpMapEnable = on
+	meditMaterials[1].bumpMap = Normal_Bump () --Normal_Bump name:"FFF"
+	meditMaterials[1].bumpMap.normal_map = Bitmaptexture fileName: (bumpnormalTex) --change bitmaptexure name?
+	meditMaterials[1].bumpMapAmount = 100
 	
 	------
 	
-	glassMat = meditMaterials[3] = StandardMaterial name:"Glass" showInViewport:true
-	glassMat.diffuseMapEnable = on
-	glassMat.twoSided = on
-	glassMat.diffuseMap = Bitmaptexture fileName:  (alphaTex)
+	meditMaterials[3] = StandardMaterial name:"Glass" showInViewport:true
+	meditMaterials[3].diffuseMapEnable = on
+	meditMaterials[3].twoSided = on
+	meditMaterials[3].diffuseMap = Bitmaptexture fileName:  (alphaTex)
 	
-	glassMat.specularLevelMapEnable = on
-	glassMat.specularLevelMap = Bitmaptexture fileName: (glassSpeclevelTex)
+	meditMaterials[3].specularLevelMapEnable = on
+	meditMaterials[3].specularLevelMap = Bitmaptexture fileName: (glassSpeclevelTex)
 	
-	glassMat.bumpMapAmount = 100
+	meditMaterials[3].bumpMapAmount = 100
 	
 )
 
 fn SetupMats =
 (
+	$*.material = undefined
+	macros.run "Medit Tools" "clear_medit_slots"
 	if(getFilenameFile maxFileName != "") then
 	(
 		baseTexName = getFilenameFile maxFileName

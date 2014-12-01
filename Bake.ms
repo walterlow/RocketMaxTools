@@ -7,7 +7,7 @@ fn BakeTextures obj texsize =
 	(
 	
 	try (destroyDialog gTextureBakeDialog)catch()
-	macros.run "Render" "BakeDialog"
+	--macros.run "Render" "BakeDialog"
 	--mr = renderers.current = mental_ray_renderer()
 	
 	render_path = "C:\Projects\Cow2\Assets\Screens\working\\" + getFileNameFile maxFileName + "\\"
@@ -19,9 +19,11 @@ fn BakeTextures obj texsize =
 		MAKEDir render_path
 	) else
 	(
+		try(
 		RTT_SceneData_AppData_Index = 0x41dd73d5
 		RTT_data.FileOutput_FilePath = render_path
-		setAppData rootNode (RTT_SceneData_AppData_Index+4) RTT_data.FileOutput_FilePath 
+		setAppData rootNode (RTT_SceneData_AppData_Index+4) RTT_data.FileOutput_FilePath
+		) catch()
 	)
 	
 	bp = obj.INodeBakeProperties

@@ -51,6 +51,7 @@ mr.DistributedEnable = false
 ::fileIn( userscriptPath + "\\RocketMaxTools\BackupTool.ms")
 ::fileIn( userscriptPath + "\\RocketMaxTools\KeyTools.ms")
 
+
 -----------------------------------------------------------------------------------------------------
 
 Rollout Menu01 "Layering Tools"
@@ -58,7 +59,7 @@ Rollout Menu01 "Layering Tools"
 	button btn_lightLayers "Lights"  pos:[8,8] width: 50
 	button btn_Black "Black"  tooltip:"Black" pos:[58,8] width: 50
 	button btn_fullBright "FB" tooltip:"Full Bright" pos:[108,8] width: 50
-	button btn_silhouette "Silhouette"  pos:[158,8] width: 50
+	button btn_silhouette "1ClickSemi"  pos:[158,8] width: 50
 		
 	button btn_blocker "Blocker" pos:[8,30] width: 50
 	button btn_fx "FX" pos:[58,30] width: 50
@@ -138,7 +139,7 @@ Rollout Menu01 "Layering Tools"
 	on btn_lightLayers pressed do (sendtoLayer (select lights)  "Lights")
 	on btn_Black pressed do (sendtoLayer selection "Black")
 	on btn_fullBright pressed do (sendtoLayer selection "FullBright")	
-	on btn_silhouette pressed do (sendtoLayer selection "Silhouette")
+	on btn_silhouette pressed do ( ::fileIn( userscriptPath + "\\RocketMaxTools\1Click.ms") )
 	on btn_blocker pressed do (sendtoLayer selection "Blocker")
 	on btn_fx pressed do (sendtoLayer selection "FX")
 	on btn_main pressed do (sendtoLayer selection "Main")
@@ -178,7 +179,7 @@ Rollout Menu02 "Geometry Tools"
 	group "Anim Helper"(
 		button btn_animHelper "Animation Helper" pos:[8,150] 
 	)
-	on btn_animHelper pressed do ( try(destroyDialog ro_animHelper) catch(); createDialog ro_animHelper)
+	on btn_animHelper pressed do ( try(destroyDialog ro_animHelper) catch(); createDialog ro_animHelper width:232 height:488)
 
 )	--endrollout
 
