@@ -1,7 +1,7 @@
 rollout ro_animHelper "Anim Helper" width:232 height:488
 (
-	global originalEndRange = animationrange.end
-	global pc
+	local originalEndRange = animationrange.end
+	local pc
 
 	groupBox grp1 "Add Path:" pos:[8,8] width:216 height:264
 	button btn_assignPC "Assign Path Constraint" pos:[16,32] width:200 height:24
@@ -74,8 +74,10 @@ rollout ro_animHelper "Anim Helper" width:232 height:488
 	(
 		undo on 
 		(
-		TempPoint = point()
-		step = spn_step.value
+			
+		local TempPoint = point()
+		local step = spn_step.value
+			
 		for i=animationrange.start to i=animationrange.end by step do
 			(
 				with animate on 
@@ -90,16 +92,16 @@ rollout ro_animHelper "Anim Helper" width:232 height:488
 	on btn_go pressed do
 	(
 		animationrange = interval 0 (edt_fend.text as integer)
-		originalEndRange = (edt_fend.text as integer)
+		local originalEndRange = (edt_fend.text as integer)
 	)
 
 	
 	fn createCopies =
 	(
-		fstart = animationrange.start
-		fend = animationrange.end
-		originalEndRange = fend
-		copies = spn_copies.value
+		local fstart = animationrange.start
+		local fend = animationrange.end
+		local originalEndRange = fend
+		local copies = spn_copies.value
 		
 		max motion mode
 		suspendEditing which:#motion
@@ -113,7 +115,7 @@ rollout ro_animHelper "Anim Helper" width:232 height:488
 				select objs
 				for i = 1 to objs.count do
 				(
-					selkeys = selectKeys objs[i].controller
+					local selkeys = selectKeys objs[i].controller
 					moveKeys objs[i].controller -(fend/copies) #selection
 					--objs[i].controller.keys.time -= (fend/copies) 
 					--deselectKeys nnl[i].controller
@@ -147,7 +149,7 @@ rollout ro_animHelper "Anim Helper" width:232 height:488
 		undo on
 		(
 		sliderTime = 0f
-		userSel = getCurrentSelection ()
+		local userSel = getCurrentSelection ()
 		deleteKeys userSel #allKeys
 		)
 	)

@@ -1,9 +1,9 @@
 rollout ro_TransferUV "Transfer UV"
 (
 	
--- 	local target
--- 	local source
-
+	local ePoly
+	local obj
+	
 	fn ePoly obj = classof obj.baseObject == Editable_Poly
 
 	pickbutton btn_source "Source" width:140 filter:ePoly
@@ -17,10 +17,10 @@ rollout ro_TransferUV "Transfer UV"
 	
 	fn TransferUV = 
 	(
-	ChannelInfo.CopyChannel source 3 spn_sourcechn.value
+	ChannelInfo.CopyChannel btn_source.object  3 spn_sourcechn.value
 	--modPanel.setCurrentObject target.baseObject ui:false
 -- 	modPanel.setCurrentObject target.baseobject
-	ChannelInfo.PasteChannel target 3 spn_targetchn.value
+	ChannelInfo.PasteChannel btn_target.object 3 spn_targetchn.value
 -- 	modPanel.setCurrentObject target.modifiers[#UVW_Mapping_Paste]
 	--maxOps.CollapseNodeTo target 2 off
 	)
@@ -42,7 +42,6 @@ rollout ro_TransferUV "Transfer UV"
 		if obj != undefined do
 		(
 			btn_source.text = "Source: " + obj.name
-			source = obj
 		)
 		
 	)--end on
@@ -52,7 +51,6 @@ rollout ro_TransferUV "Transfer UV"
 		if obj != undefined do
 		(
 			btn_target.text =  "Target: " + obj.name
-			target=obj
 		)
 	)--end on
 	
