@@ -48,8 +48,29 @@
 				RMT.lightmapTex = RMT.final_path + RMT.baseTexName + "-E" + RMT.ext
 				RMT.silhouetteTex = RMT.final_path + RMT.baseTexName + "-F" + RMT.ext
 				RMT.decalTex = RMT.final_path + RMT.baseTexName + "-G" + RMT.ext
+				
+				format "Initialize texture path for % scene. \n" RMT.baseTexName 
 			) 
-			else ( messagebox("Please save and name your file first.") )
+			else ( print ("Fail to setup materials. Please save and name your file first.") )
+		),
+		
+		fn InitCallbacks =
+		(
+			-- refresh UI if scene changed (load, reset, new, nodes renamed, deleted)
+			callbacks.addScript #systemPostNew "RMT.callback_SceneChanged()" id:#RMT_callback_RefreshUI
+			callbacks.addScript #systemPostReset "RMT.callback_SceneChanged()" id:#RMT_callback_RefreshUI
+			callbacks.addScript #filePostOpen "RMT.callback_SceneChanged()" id:#RMT_callback_RefreshUI
+			callbacks.addScript #filePostSave "RMT.callback_SceneChanged()" id:#RMT_callback_RefreshUI
+		),
+		
+		fn DestroyCallbacks=
+		(
+			callbacks.removeScripts id:#RMT_callback_RefreshUI
+		),
+		
+		fn callback_SceneChanged =
+		(
+			InitTextures()
 		),
 		
 		fn OneObject = 
@@ -271,15 +292,15 @@
 			(
 			for o in selection do 
 			(
-					if (theLayer = LayerManager.getLayerfromName layerName ) == undefined then
-						(
-							theLayer = LayerManager.newLayerfromName layerName
-							theLayer.addNode o
-						)
-						else
-						(
-						theLayer.addNode o
-						)
+				if (theLayer = LayerManager.getLayerfromName layerName ) == undefined then
+				(
+					theLayer = LayerManager.newLayerfromName layerName
+					theLayer.addNode o
+				)
+				else
+				(
+				theLayer.addNode o
+				)
 			)
 			format "Selection moved to % \n" layerName
 		) else( messagebox ("Please select something!") )
@@ -315,12 +336,311 @@
 	(
 		delete (for obj in Geometry where classof obj == Editable_Poly and polyop.getNumFaces obj == 0 collect obj)
 		delete (for obj in Geometry where classof obj == Editable_Mesh and meshop.getNumFaces obj == 0 collect obj)
+	),
+	
+	fn WeldVertices =
+	(
+		local obj, allVerts, selVerts
+		
+		for obj in selection do
+		( 
+				
+				if (subobjectlevel == 0) then
+				(
+					undo on
+					(
+						obj.weldThreshold = 0.001 -- set weld threshold value
+						allVerts = #{1..(polyop.getNumVerts obj)} -- get all verts list
+						--print	("verts: " + allVerts.count as string)
+						if (allVerts.count != 0) then
+						(
+							print ("Welded: " + allVerts.count as string  + " verts.")
+							polyop.weldVertsByThreshold obj allVerts -- Weld
+						)
+					)
+				)
+				
+				if (subobjectlevel == 1) then
+				(
+					undo on
+					(
+						$.weldThreshold = 0.001 -- set weld threshold value
+						selVerts = $.selectedverts
+						--print	("verts: " + selVerts.count as string)
+						if (selVerts.count !=0 ) then
+						(
+						print ("Welded: " + selVerts.count as string + " verts.")
+						$.EditablePoly.weldFlaggedVertices ()
+						)
+						else (messagebox("Select verts to weld!"))
+					)
+				) 
+		)
+	),
+	
+	fn ResetXFPoly = 
+	(
+		undo on
+		(
+			for obj in (selection) do
+			(
+				resetXForm obj
+				convertToPoly obj
+			)
+		)
+		print "Reseted XForms"
+	),
+	
+	fn CenPivot = 
+	(
+		local selected_vert, selected_vert_pos, selected_edge, selected_edge_verts
+		
+		if (selection.count != 0) then
+		(
+			for obj in selection do
+			(
+				
+				if obj.pivot != obj.center then
+				(
+				obj.pivot = obj.center
+				) 
+			)
+
+			if (subobjectlevel == 1) then
+			(
+				selected_vert = polyop.getVertSelection $ as array
+				if (selected_vert.count == 1) then
+				(
+					selected_vert_pos = polyop.getVert $ selected_vert[1]
+					$.pivot = selected_vert_pos
+					subobjectlevel = 0
+				) else (Messagebox "Select a vertex!")
+			)
+			
+			if (subobjectlevel == 2) then
+			(
+				selected_edge = polyop.getEdgeSelection $
+				selected_edge_verts = (polyop.getVertsUsingEdge $ selected_edge ) as array
+				if (selected_edge_verts.count == 2) then
+				(
+					selected_edge_center = ( (polyop.getVert $ selected_edge_verts[1]) + (polyop.getVert $ selected_edge_verts[2]) ) / 2
+					$.pivot = selected_edge_center
+					subobjectlevel = 0
+				) else (Messagebox "Select an edge!")
+			)
+			
+		)
+		redrawviews()
+	),
+
+	fn centerPivotWorld =
+	(
+		for obj in selection do
+		(
+			obj.pivot = [0,0,0]
+		)
+	),
+	
+	fn DetachFace thename: (uniquename "detached") =
+	(
+		local selectedFaces
+		
+		if(subobjectlevel == 0 ) then ()
+		else
+		(
+			selectedFaces = polyop.getFaceSelection $
+			if (selectedFaces.isEmpty) then (messagebox("Please select some faces!"))
+			else
+			(	
+				selectedFaces = polyop.getFaceSelection $
+				polyop.detachFaces $ selectedFaces asNode:true name:thename
+				--could also use #selection instead of selectedFaces
+			)
+		)
+	),
+	
+	fn CreateBouncer =
+	(
+		local b, themat
+	
+		if sceneMaterials["bouncer"] == undefined then
+		(
+			themat = StandardMaterial name:"bouncer" specularLevel:30 glossiness:10 diffusecolor: (color 50 50 50)
+		)
+		
+		if ($Bouncer == undefined) then
+		(
+			b = Plane length:12 width: 43 pos:[20,-1,6] isSelected:on lengthsegs:1 widthsegs:1
+			rotate b (angleaxis -90 [1,0,0])
+			convertToPoly b
+			b.name = "Bouncer"
+			b.boxmode = on
+			b.castShadows = off
+			b.receiveshadows = off
+			b.ApplyAtmospherics = off
+			b.inheritVisibility = off
+			b.primaryVisibility = off
+			b.secondaryVisibility = off
+			b.material = themat
+			sendtoLayer b "Bouncer"
+
+		)
+		else
+		(
+			Messagebox("Bouncer exists!")
+			sendtoLayer $ "Bouncer"
+		)
+
+	),
+	
+	fn QuickPlanarUV2 =
+	(
+		if (selection.count == 1) then
+		(
+		modPanel.addModToSelection (Unwrap_UVW ()) ui:on
+		$.modifiers[#unwrap_uvw].unwrap.setMapChannel 2
+		--$.modifiers[#unwrap_uvw].unwrap.edit ()
+		--do not reset uv2 for our workflow.	
+		polyCount = polyop.getNumFaces $;
+		$.modifiers[#unwrap_uvw].unwrap6.selectFacesByNode #{1..polyCount} $
+		$.modifiers[#unwrap_uvw].unwrap5.quickPlanarMap ()
+		ConvertToPoly $
+		Messagebox($.name + " Planar mapped!")
+		) else (Messagebox "Select 1 object")
+	),
+
+	fn ApplyUV2 = 
+	(
+		if(selection.count != 0) then (
+		modPanel.addModToSelection (Unwrap_UVW ()) ui:on
+		for obj in selection do
+		(
+			obj.modifiers[#unwrap_uvw].unwrap.setMapChannel 2
+			ConvertToPoly obj
+		)
+		Messagebox("Selected objects UV2 applied")
+		)
+		else(
+			Messagebox("Select something!")
+		)
+	),
+
+	fn UVPack =
+	(
+		if (selection.count == 1) then
+		(
+			if querybox "This will pack and overide UV Chn2. Continue?" beep:true then
+			(
+				modPanel.addModToSelection (UV_Packer ()) ui:on
+				$.modifiers[#UV_Packer].channel = 2
+				$.modifiers[#UV_Packer].padding = 8
+				$.modifiers[#UV_Packer].width = 2048
+				$.modifiers[#UV_Packer].height = 2048
+				$.modifiers[#UV_Packer].aspect = 1
+				$.modifiers[#UV_Packer].pack()
+			)
+			else
+			(
+				Messagebox ("Packing cancelled")
+			)
+		) else
+		(
+			Messagebox ("Select 1 object only.")
+		)
+
+	),
+	
+	fn AutoDoors =
+	(
+		local p1, p2, p3, p4, p5, p6, p7, p8
+		
+		p5 = "E*_Breakable"
+		p6 = "E*_Frame"
+		p7 = "E*_Hole"
+		p8 = "E*_Wall"
+		
+		p1 = "*_Breakable???*"
+		p2 = "*_Frame???*"
+		p3 = "*_Hole???*"
+		p4 = "*_Wall???*"
+		
+		
+		with redraw off
+		(
+			for obj in objects do 
+			(
+				if (matchPattern obj.name pattern: p1 or matchPattern obj.name pattern: p5) do
+				(
+					format "Matched Pattern: % or % --> % \n" p1 p5 obj.name 
+					select obj
+					sendtoLayer obj "Exit_Breakable"
+				)
+				
+				if (matchPattern obj.name pattern: p2 or matchPattern obj.name pattern: p6) do
+				(
+					format "Matched Pattern: % or % --> % \n" p2 p6 obj.name 
+					select obj
+					sendtoLayer obj "Exit_Frame"
+				)
+				
+				if (matchPattern obj.name pattern: p3 or matchPattern obj.name pattern: p7) do
+				(
+					format "Matched Pattern: % or % --> % \n" p3 p7 obj.name 
+					select obj
+					sendtoLayer obj "Exit_Hole"
+				)
+				
+				if (matchPattern obj.name pattern: p4 or matchPattern obj.name pattern: p8) do
+				(
+					format "Matched Pattern: % or % --> % \n" p4 p8 obj.name 
+					select obj
+					sendtoLayer obj "Exit_Wall"
+				)
+				
+			)
+		)
+	),
+	
+	fn EditNormalFix =
+	(
+		local smoothMod, obj
+		
+		smoothMod = Smooth()
+		--smoothMod.autosmooth = on
+		smoothMod.smoothingBits = 1
+		smoothMod.threshold = 180
+		obj = getCurrentSelection()
+		
+		if (obj.count != 0) then
+		(
+			for i = 1 to obj.count where canConvertTo obj[i] Editable_Poly == true do
+			(
+				addModifier obj[i] (Edit_Poly())
+				addModifier obj[i] smoothMod
+				CollapseStack obj[i]
+				--obj.autoSmoothThreshold = 60
+				--allfaces = polyOp.getNumFaces obj
+				--polyOp.setFaceSmoothGroup obj #{1..allfaces} 0 
+				--polyop.autosmooth obj
+			)
+			
+		) else (messagebox ("Select some objects"))
+		print "Normals reseted"
+	),
+
+	
+	fn BuildRun =
+	(
+		shellLaunch "C:\Projects\Cow2\Tools\buildandrun.bat" ""
+		print("Building...")
 	)
+
 
 	) -- end struct
 
 	RMT = _RMT_()
 	RMT.InitVariables()
+	RMT.InitCallbacks()
 -- 	RMT.SetupMats()
 	
 )
