@@ -1,5 +1,6 @@
 fn createFX =
 (
+	local p 
 	p = Plane uniquename "FX" pos:[0,0,19]
 	p.length = p.width = 5
 	p.lengthsegs = p.widthsegs = 1

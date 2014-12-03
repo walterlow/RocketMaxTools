@@ -177,16 +177,16 @@ fn setupDX9Mats =
 	
 	if sceneMaterials["Terminator"] == undefined then
 	(
-	meditMaterials[18] = meditMaterials[11] = DirectX_9_Shader ()
+	meditMaterials[18] = DirectX_9_Shader ()
 	meditMaterials[18].name = "Terminator"  --eg, Simple_2UV
 	meditMaterials[18].effectfile = ::shader_path + "simple-alpha.fx"
 	meditMaterials[18].technique = 0
 	meditMaterials[18].renderMaterial = StandardMaterial name:"simple-alpha_renderstyle"
-	if (existFile (alphaTex)) do (meditMaterials[11].TexDiffuse = openBitMap (alphaTex) ) 
+	if (existFile (alphaTex)) do (meditMaterials[18].TexDiffuse = openBitMap (alphaTex) ) 
 	meditMaterials[18].Blend = 1
 	meditMaterials[18].Show_Transparency = 1
 	)
-	 else ( meditMaterials[11] =  sceneMaterials["Terminator"] )
+	 else ( meditMaterials[18] =  sceneMaterials["Terminator"] )
 	
 )
 
