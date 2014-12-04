@@ -2,6 +2,17 @@
 	
 	global RMT
 	
+	global rf_MainFloater
+	global ro_doorHelper
+	global ro_doorHelper2
+	global ro_TransferUV
+	global ro_animHelper
+	global ro_Menu01
+	global ro_Menu02
+	global ro_Menu03
+	global ro_Menu04
+	global ro_RocketBirds
+	
 	struct _RMT_
 	(
 		script_path,
@@ -9,8 +20,10 @@
 		final_path,
 		shader_path,
 		ext,
-		therenderer,
+		mrRender,
+		slRender,
 		
+		--texture variables
 		baseTexName,
 		diffuseTex,
 		speclevelTex,
@@ -23,6 +36,11 @@
 		silhouetteTex,
 		decalTex,
 		
+		--mat ids for detaching
+		ladderID,
+		glassID,
+		alphaID,
+		
 		fn InitVariables =
 		(
 			RMT.script_path = getDir #userscripts
@@ -30,6 +48,12 @@
 			RMT.final_path =  "C:\\Projects\\Cow2\\Assets\\Screens\\"
 			RMT.shader_path = "C:\\Projects\\Cow2\\Assets\\Shaders\\"
 			RMT.ext = ".png"
+			RMT.mrRender = renderers.current = mental_ray_renderer()
+			RMT.slRender = Default_Scanline_Renderer()
+			
+			RMT.ladderID = 500
+			RMT.glassID = 600
+			RMT.alphaID = 700
 		),
 		
 		fn InitTextures =
@@ -51,7 +75,7 @@
 				
 				format "Initialize texture path for % scene. \n" RMT.baseTexName 
 			) 
-			else ( print ("Fail to setup materials. Please save and name your file first.") )
+			else ( print ("Fail to init texture paths. Please save and name your file first.") )
 		),
 		
 		fn InitCallbacks =
@@ -70,7 +94,6 @@
 		
 		fn callback_SceneChanged =
 		(
-			gc()
 			RMT.DestroyCallbacks()
 			RMT.InitTextures()
 			RMT.InitCallbacks()
@@ -96,14 +119,14 @@
 			)
 		),
 		
-		fn existFile strFileName = (getfiles strFileName).count != 0, 
+		fn existFile strFileName = ( (getfiles strFileName).count != 0 ), 
 		
 		fn SetupMats =
 		(
 			--reinit png paths
 			RMT.InitTextures()
 		
---  			try(
+  			try(
 			---------------------- FX materials --------------------------
 			macros.run "Medit Tools" "clear_medit_slots"
 			
@@ -148,9 +171,8 @@
 			
 	 		if sceneMaterials["SimpleCastShadow_2UV"] == undefined then
 			(
-				SimpleCastShadow2uv= DxMaterial ()
+				SimpleCastShadow2uv = DxMaterial ()
 				SimpleCastShadow2uv.name = "SimpleCastShadow_2UV"  --eg, Simple_2UV
-				
 				SimpleCastShadow2uv.effectfile = RMT.shader_path + "simple-2uv-castshadow.fx"
 				SimpleCastShadow2uv.technique = 0
 				SimpleCastShadow2uv.renderMaterial = StandardMaterial name:"simple_renderstyle"
@@ -172,7 +194,6 @@
 			(
 				Silhouette = DxMaterial ()
 				Silhouette.name = "Silhouette"  --eg, Simple_2UV
-				 
 				Silhouette.effectfile = RMT.shader_path + "silhouette.fx"
 				Silhouette.technique = 0
 				Silhouette.renderMaterial = StandardMaterial name:"silhouette_renderstyle"
@@ -187,7 +208,6 @@
 			(
 				blackfx = DxMaterial ()
 				blackfx.name = "Black"  --eg, Simple_2UV
-				 
 				blackfx.effectfile = RMT.shader_path + "black.fx"
 				blackfx.technique = 0
 				blackfx.renderMaterial = StandardMaterial name:"black_renderstyle"
@@ -200,7 +220,6 @@
 			(
 				alphafx = DxMaterial ()
 				alphafx.name = "Alpha"  --eg, Simple_2UV
-				 
 				alphafx.effectfile = RMT.shader_path + "simple-alpha.fx"
 				alphafx.technique = 0
 				alphafx.renderMaterial = StandardMaterial name:"simple-alpha_renderstyle"
@@ -217,7 +236,6 @@
 			(
 				alpha2uv = DxMaterial ()
 				alpha2uv.name = "Alpha_2UV"  --eg, Simple_2UV
-				 
 				alpha2uv.effectfile = RMT.shader_path + "simple-alpha-2uv.fx"
 				alpha2uv.technique = 0
 				alpha2uv.renderMaterial = StandardMaterial name:"simple-alpha-2uv_renderstyle"
@@ -240,7 +258,6 @@
 			(
 				multiplyfx = DxMaterial ()
 				multiplyfx.name = "Multiply"  --eg, Simple_2UV
-				 
 				multiplyfx.effectfile =  RMT.shader_path + "simple-multiply.fx"
 				multiplyfx.technique = 0
 				multiplyfx.renderMaterial = StandardMaterial name:"simple-multiply_renderstyle"
@@ -257,7 +274,6 @@
 			(
 				breakablealpha = DxMaterial ()
 				breakablealpha.name = "BreakableAlpha"  --eg, Simple_2UV
-				 
 				breakablealpha.effectfile = (RMT.shader_path + "simple-multiply.fx")
 				breakablealpha.technique = 0
 				breakablealpha.renderMaterial = StandardMaterial name:"simple-multiply_renderstyle"
@@ -273,7 +289,6 @@
 			(
 				chickenfx = DxMaterial ()
 				chickenfx.name = "Chicken"
-				 
 				chickenfx.effectfile = RMT.shader_path + "character-background.fx"
 				chickenfx.technique = 0
 				chickenfx.renderMaterial = StandardMaterial name:"character-background_renderstyle"
@@ -290,7 +305,6 @@
 			(
 				starsfx = DxMaterial ()
 				starsfx.name = "Stars"  --eg, Simple_2UV
-				 
 				starsfx.effectfile = RMT.shader_path + "simple-alpha.fx"
 				starsfx.technique = 0
 				starsfx.renderMaterial = StandardMaterial name:"simple-alpha_renderstyle"
@@ -308,7 +322,6 @@
 			(
 			terminatorfx = DxMaterial () 
 			terminatorfx.name = "Terminator"  --eg, Simple_2UV
-				 
 			terminatorfx.effectfile = RMT.shader_path + "simple-alpha.fx"
 			terminatorfx.technique = 0
 			terminatorfx.renderMaterial = StandardMaterial name:"simple-alpha_renderstyle"
@@ -321,19 +334,16 @@
 			)
 			 else ( meditMaterials[18] = sceneMaterials["Terminator"]  )
 			
--- 		) --end try
---  		catch( print "check")
-			
-			
-			
+		) --end try
+  		catch( messagebox "Script Error: Please restart max or contact Walter. ;)")
+
 			---------------------- Non-FX materials --------------------------
 			
 			meditMaterials[1] = StandardMaterial name:"Main" showInViewport:true
 			meditMaterials[1].diffuseMapEnable = on
 			meditMaterials[1].twoSided = on
 			meditMaterials[1].diffuseMap = Bitmaptexture fileName:  (RMT.diffuseTex)
-			
-			
+
 			meditMaterials[1].specularLevelMapEnable = on
 			meditMaterials[1].specularLevelMap = Bitmaptexture fileName: (RMT.speclevelTex)
 			
@@ -353,15 +363,13 @@
 			meditMaterials[3].specularLevelMap = Bitmaptexture fileName: (RMT.glassSpeclevelTex)
 			
 			meditMaterials[3].bumpMapAmount = 100
-			
 		),
 		
 		fn CleanMats =
 		(
-			local obj, objArray
+			local objArray
 			undo on (
 				objArray = getCurrentSelection()
-		
 				if objArray.count == 0 then
 				(
 					if querybox "Do you want to clear all object materials in the scene?" beep:true do
@@ -381,27 +389,46 @@
 		
 		fn SetupMR =
 		(
-			local mr = mental_ray_renderer()
+			
+-- 			if (renderers.current != RMT.mrRender) then renderers.current = RMT.mrRender
 			
 			--FG BASICS
-			mr.FinalGatherEnable2 = true 
-			mr.FinalGatherDensity = 0.3
-			mr.FinalGatherAccuracy = 1100
-			mr.FinalGatherBounces = 4
+			RMT.mrRender.FinalGatherEnable2 = true 
+			RMT.mrRender.FinalGatherDensity = 0.3
+			RMT.mrRender.FinalGatherAccuracy = 1100
+			RMT.mrRender.FinalGatherBounces = 4
 			
 			--FG INTERPOLATION
-			mr.FinalGatherUseRadiusInterpolation = true
-			mr.FinalGatherView = false
-			mr.UseFinalGatherRadius = true
-			mr.UseFinalGatherMinRadius = true
-			mr.FinalGatherRadius = 32
-			mr.FinalGatherMinRadius = 3.3
+			RMT.mrRender.FinalGatherUseRadiusInterpolation = true
+			RMT.mrRender.FinalGatherView = false
+			RMT.mrRender.UseFinalGatherRadius = true
+			RMT.mrRender.UseFinalGatherMinRadius = true
+			RMT.mrRender.FinalGatherRadius = 32
+			RMT.mrRender.FinalGatherMinRadius = 3.3
 			
-			mr.MaximumReflections = 1
-			mr.MaximumRefractions = 1
+			RMT.mrRender.MaximumReflections = 1
+			RMT.mrRender.MaximumRefractions = 1
 			
-			renderers.current = mr
 			
+			------------------------draft------------------------------
+			
+-- 			--FG BASICS
+-- 			RMT.mrRender.FinalGatherEnable2 = true 
+-- 			RMT.mrRender.FinalGatherDensity = 0.1
+-- 			RMT.mrRender.FinalGatherAccuracy = 50
+-- 			RMT.mrRender.FinalGatherBounces = 0
+-- 			
+-- 			--FG INTERPOLATION
+-- 			RMT.mrRender.FinalGatherUseRadiusInterpolation = false
+-- 			RMT.mrRender.FinalGatherView = false
+-- 			RMT.mrRender.UseFinalGatherRadius = false
+-- 			RMT.mrRender.UseFinalGatherMinRadius = false
+-- 			RMT.mrRender.FinalGatherRadius = 1
+-- 			RMT.mrRender.FinalGatherMinRadius = 1
+-- 			
+-- 			RMT.mrRender.MaximumReflections = 1
+-- 			RMT.mrRender.MaximumRefractions = 1
+	
 			print ("MentalRay FG Settings Loaded")
 		),
 		
@@ -409,7 +436,9 @@
 		(
 			local render_path, bp, lm, ilm, ao
 			
-			if(classof $ == Editable_Poly and selection.count != 0) then
+-- 			if renderers.current != RMT.mrRender then ( RMT.mrRender ; print"swap")
+			
+			if(classof $ == Editable_Poly and selection.count == 1 ) then
 			(
 			
 			try (destroyDialog gTextureBakeDialog)catch()
@@ -418,9 +447,10 @@
 			
 			render_path = RMT.working_path + getFileNameFile maxFileName + "\\"
 
-			--WTF IS THIS ABSTRACT CODE?  (sets the default output folder of RTT)
-			
 			if (not (doesfileExist render_path) ) then ( MAKEDir render_path)
+			else ()
+			
+			/* if (not (doesfileExist render_path) ) then ( MAKEDir render_path)
 			else
 			(
 				try(
@@ -428,14 +458,13 @@
 				RTT_data.FileOutput_FilePath = render_path
 				setAppData rootNode (RTT_SceneData_AppData_Index+4) RTT_data.FileOutput_FilePath
 				) catch()
-			)
+			) */
 			
 			bp = obj.INodeBakeProperties
 			bp.removeAllBakeElements()
 			bp.bakeEnabled = true
 			bp.bakeChannel = 2
 			bp.nDilations = 2
-
 
 			--Lightmap
 			lm = LightingMap()
@@ -482,8 +511,6 @@
 			bp.addBakeElement ao
 			
 			--Render
-			--mr = renderers.current = mental_ray_renderer()
-			--mr.DistributedEnable = true
 			--render rendertype:#bakeSelected outputwidth:Xsize outputheight:Ysize outputfile:(fPath+fName+fType)
 			--render rendertype:#bakeSelected vfb:on progressBar:true outputSize:[2048,2048]
 			render renderType:#bakeSelected frame:#current vfb:true progressBar:true outputwidth:texsize outputheight:texsize
@@ -814,6 +841,12 @@
 
 	),
 	
+	fn TransferUV source target sourcechn targetchn = 
+	(
+	ChannelInfo.CopyChannel source 3 sourcechn
+	ChannelInfo.PasteChannel target 3 targetchn
+	),
+	
 	fn AutoDoors =
 	(
 		local p1, p2, p3, p4, p5, p6, p7, p8
@@ -837,28 +870,28 @@
 				(
 					format "Matched Pattern: % or % --> % \n" p1 p5 obj.name 
 					select obj
-					sendtoLayer obj "Exit_Breakable"
+					RMT.sendtoLayer obj "Exit_Breakable"
 				)
 				
 				if (matchPattern obj.name pattern: p2 or matchPattern obj.name pattern: p6) do
 				(
 					format "Matched Pattern: % or % --> % \n" p2 p6 obj.name 
 					select obj
-					sendtoLayer obj "Exit_Frame"
+					RMT.sendtoLayer obj "Exit_Frame"
 				)
 				
 				if (matchPattern obj.name pattern: p3 or matchPattern obj.name pattern: p7) do
 				(
 					format "Matched Pattern: % or % --> % \n" p3 p7 obj.name 
 					select obj
-					sendtoLayer obj "Exit_Hole"
+					RMT.sendtoLayer obj "Exit_Hole"
 				)
 				
 				if (matchPattern obj.name pattern: p4 or matchPattern obj.name pattern: p8) do
 				(
 					format "Matched Pattern: % or % --> % \n" p4 p8 obj.name 
 					select obj
-					sendtoLayer obj "Exit_Wall"
+					RMT.sendtoLayer obj "Exit_Wall"
 				)
 				
 			)
@@ -1190,13 +1223,37 @@
 		print "Doors marked..."
 	),
 	
-	fn markLadders = 
+	
+	fn assignObjGenericMatID id =
+	(
+		for obj in selection do
+		(
+			polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} id   
+		)
+	),
+	
+	fn assignFaceGenericMatID id =
 	(
 		local selectedFaces
 		
-		selectedFaces = polyOp.getFaceSelection $
-		if ( not selectedFaces.isEmpty) then polyop.setFaceMatID $ selectedFaces 500
-		else ()
+		if selection.count == 1 then
+		(
+			if subobjectlevel == 0 do messagebox "Select faces or elements"
+			
+			if subobjectlevel == 4 or subobjectlevel == 5 then
+			(
+				selectedFaces = polyOp.getFaceSelection $
+				if ( not selectedFaces.isEmpty) then polyop.setFaceMatID $ selectedFaces id
+				else ( messagebox "Select faces or elements")
+			) 
+		) 	else ( messagebox "Select 1 obj")
+	),
+	
+
+	
+	fn markLadders = 
+	(
+		RMT.assignFaceGenericMatID RMT.glassID
 		subobjectlevel = 0
 	),
 	
@@ -1215,7 +1272,7 @@
 		objName = "_Breakables"
 		layer = "Exit_Breakable"
 		polyop.detachFaces $ totalFaces asNode:true name: objName
-		sendtoLayerByName objName layer
+		RMT.sendtoLayerByName objName layer
 		
 		totalFaces = #()
 		for i = 0 to 7 do
@@ -1228,7 +1285,7 @@
 		objName = "_Frames"
 		layer = "Exit_Frame"
 		polyop.detachFaces $ totalFaces asNode:true name: "_Frames"
-		sendtoLayerByName objName layer
+		RMT.sendtoLayerByName objName layer
 		
 		totalFaces = #()
 		for i = 0 to 7 do
@@ -1241,7 +1298,7 @@
 		objName = "_Hole"
 		layer = "Exit_Hole"
 		polyop.detachFaces $ totalFaces asNode:true name: "_Hole"
-		sendtoLayerByName objName layer
+		RMT.sendtoLayerByName objName layer
 		
 		totalFaces = #()
 		for i = 0 to 7 do
@@ -1254,7 +1311,7 @@
 		objName = "_Wall"
 		layer = "Exit_Wall"
 		polyop.detachFaces $ totalFaces asNode:true name: "_Wall"
-		sendtoLayerByName objName layer
+		RMT.sendtoLayerByName objName layer
 	),
 	
 	fn splitDetachables =
@@ -1265,28 +1322,28 @@
 		(
 			id = ("10" + i as string)
 			layer = ("Exit" + i as string + "_Breakable")
-			Detach (id as integer) layer
+			RMT.Detach (id as integer) layer
 		)
 
 		for i = 0 to 7 do
 		(
 			id = ("20" + i as string)
 			layer = ("Exit" + i as string + "_Frame")
-			Detach (id as integer) layer
+			RMT.Detach (id as integer) layer
 		)
 
 		for i = 0 to 7 do
 		(
 			id = ("30" + i as string)
 			layer = ("Exit" + i as string + "_Hole")
-			Detach (id as integer) layer
+			RMT.Detach (id as integer) layer
 		)
 
 		for i = 0 to 7 do
 		(
 			id = ("40" + i as string)
 			layer = ("Exit" + i as string + "_Wall")
-			Detach (id as integer) layer
+			RMT.Detach (id as integer) layer
 		)
 		
 		RMT.DeleteEmptyObjects()
@@ -1296,17 +1353,17 @@
 	
 	fn splitOthers =
 	(
-		Detach 600 "Glass"
-		Detach 700 "FireExtAlpha"
+		RMT.Detach 600 "Glass"
+		RMT.Detach 700 "FireExtAlpha"
 		
-		sendtoLayerByName "Glass" "Main"
-		sendtoLayerByName "FireExtAlpha" "Main"
+		RMT.sendtoLayerByName "Glass" "Main"
+		RMT.sendtoLayerByName "FireExtAlpha" "Main"
 	),
 
 	fn splitLadders =
 	(
-		Detach 500 "Ladders"
-		sendtoLayerByName "Ladders" "Ladders"
+		RMT.Detach 500 "Ladders"
+		RMT.sendtoLayerByName "Ladders" "Ladders"
 	),
 	
 	fn Backup =
@@ -1353,90 +1410,183 @@
 		)
 	),
 	
+	fn SemiAutoSetup =
+	(
+		local importedFile, tokens, fileTitle
+		
+		importedFile = getOpenFileName "Import RocketEd dae" filename:"C:\\Projects\\Cow2\\Assets\\Screens\\" types: "OpenCollada(*.dae)|*.dae|"
+		
+		if importedFile != undefined then
+		(
+			tokens = filterString importedFile "\\"
+			fileTitle = substring tokens[6] 1 (tokens[6].count-4) -- start from int 1 to tokenlength-4
+
+			suspendEditing which:#modify
+	
+			if (not (doesFileExist (RMT.working_path + fileTitle))) do
+			(
+				makeDir  (RMT.working_path + fileTitle)
+			)
+				
+			savemaxFile (RMT.working_path + fileTitle + "\\"+ fileTitle + ".max")
+				
+			importFile importedFile #noPrompt using:DAEIMP
+
+			format " ** Imported File: % **\n" fileTitle
+
+			--importerPlugin.classes
+			--exporterPlugin.classes
+
+			select $*
+			RMT.ResetXFPoly()
+			RMT.AutoDoors()
+			RMT.assignDoorMatID()
+			RMT.SetupMats()
+			$*.material = meditmaterials[1]
+			RMT.createBouncer()
+			RMT.sendtoLayer $Bouncer "Bouncer"
+			clearSelection()
+
+			--save file, 
+			--set up materials
+			
+			for o in objects do
+			(
+				if matchpattern o.name pattern: "*Silhouette*" then
+				(
+					--o.material = sceneMaterials["Silhouette"]
+					o.material = meditmaterials[9]
+					RMT.sendtoLayerByName o.name "Silhouette"
+					format "found: %" o.name
+				)
+				
+			)
+
+			for o in objects where (classof o.baseobject == Editable_Poly) do
+			(
+				ChannelInfo.CopyChannel o 3 1
+				ChannelInfo.PasteChannel o 3 2
+				collapseStack o
+			)
+			
+			resumeEditing which:#modify
+		)
+	),
+	
 	fn BuildRun =
 	(
 		shellLaunch "C:\Projects\Cow2\Tools\buildandrun.bat" ""
 		print("Building...")
+	),
+	
+	fn CreateUI =
+	(
+		RMT.InitCallbacks()
+		
+		rf_MainFloater = newRolloutFloater "RocketMaxTools" 260 780
+
+		addRollout ro_Menu01 rf_MainFloater
+		addRollout ro_Menu02 rf_MainFloater
+		addRollout ro_Menu03 rf_MainFloater
+		addRollout ro_Menu04 rf_MainFloater
+		
+		addRollout ro_animHelper rf_mainFloater
+		addRollout ro_TransferUV rf_MainFloater
+		addrollout ro_doorHelper rf_MainFloater
+		addRollout ro_Rocketbirds rf_MainFloater
+		
+	),
+	
+	fn ExitUI =
+	(
+		
+		RMT.DestroyCallbacks()
+		
+		if rf_MainFloater !=undefined then closeRolloutFloater rf_MainFloater
+		if dial_doorHelper !=undefined then destroyDialog dial_doorHelper
+		if ro_TransferUV !=undefined then destroyDialog ro_TransferUV
+		if ro_doorHelper2 !=undefined then destroyDialog ro_doorHelper2
+		if ro_animHelper !=undefined then destroyDialog ro_animHelper
 	)
 
 
-	) -- end struct
+	) -- end RMT struct
 
 
-----------------------------------------------------------------------------
-	-- ROLLOUTS
-----------------------------------------------------------------------------
+
+----------------------------------------------------------- Start of MAIN ROLLOUTS BlOCK ---------------------------------------------
+	( -- MAIN ROLLOUTS
 	
-	Rollout Menu01 "Layering Tools"
-	(
-		button btn_lightLayers "Lights"  pos:[8,8] width: 50
-		button btn_Black "Black"  tooltip:"Black" pos:[58,8] width: 50
-		button btn_fullBright "FB" tooltip:"Full Bright" pos:[108,8] width: 50
-		button btn_silhouette "1ClickSemi"  pos:[158,8] width: 50
-			
-		button btn_blocker "Blocker" pos:[8,30] width: 50
-		button btn_fx "FX" pos:[58,30] width: 50
-		button btn_main "Main" pos:[108,30] width: 50
-		button btn_ladder "Ladders" pos:[158,30] width:50
-		
-		local files = #( "Chicken", "FX", "Grates", "Lines", "Abattoir Lines")
-
-		group ""(
-			button btn_bouncer "Bouncer" pos:[8,70] width: 50
-			colorpicker theColor "" color:[50,50,50] pos:[58,70]
-			--button btn_importFX "Import FX" pos:[108, 70]
-			--button btn_importChicken "Chicken" pos:[178, 70]
+		rollout ro_Menu01 "Layering Tools"
+		(
+			button btn_lightLayers "Lights"  pos:[8,8] width: 50
+			button btn_Black "Black"  tooltip:"Black" pos:[58,8] width: 50
+			button btn_fullBright "FB" tooltip:"Full Bright" pos:[108,8] width: 50
+			button btn_silhouette "1ClickSemi"  pos:[158,8] width: 50
 				
-			dropdownlist ddl_import "" items: files across: 2 width: 80 pos:[108, 70]
-			button btn_import "Import" pos:[190, 70]
-		)
-		
-		button btn_delEmptyLayers "Del Empty Layers"  across:2
-		button btn_delemptyobjects "Del Empty Objects" items:files
-		
-		on theColor changed new_col do (if sceneMaterials["bouncer"] != undefined then sceneMaterials["bouncer"].diffusecolor = new_col)
-		on btn_bouncer pressed do (RMT.CreateBouncer())
-		--on btn_importFX pressed do (importFX())
-		--on btn_importChicken pressed do ( mergemaxfile (userscriptPath + "\\RocketMaxTools\\Assets\\Chicken\\RiggedChicken.max") #select #useSceneMtlDups )
-		
-		on btn_import pressed do
-		(
-			case ddl_import.selected of
-			(
-				"Chicken": mergemaxfile (RMT.script_path + "\\RocketMaxTools\\Assets\\Chicken\\RiggedChicken.max") #select #useSceneMtlDups
-				"FX": RMT.importFX()
-				"Grates": mergemaxfile (RMT.script_path  + "\\RocketMaxTools\\Assets\\Grates\\Grates.max") #select #useSceneMtlDups
-				"Lines": mergemaxfile (RMT.script_path  + "\\RocketMaxTools\\Assets\\Lines\\Lines.max") #select #useSceneMtlDups
-				"Abattoir Lines": mergemaxfile (RMT.script_path  + "\\RocketMaxTools\\Assets\\Lines\\AbattoirLines.max") #select #useSceneMtlDups
+			button btn_blocker "Blocker" pos:[8,30] width: 50
+			button btn_fx "FX" pos:[58,30] width: 50
+			button btn_main "Main" pos:[108,30] width: 50
+			button btn_ladder "Ladders" pos:[158,30] width:50
+			
+			local files = #( "Chicken", "FX", "Grates", "Lines", "Abattoir Lines")
 
+			group ""
+			(
+				button btn_bouncer "Bouncer" pos:[8,70] width: 50
+				colorpicker theColor "" color:[50,50,50] pos:[58,70]
+				--button btn_importFX "Import FX" pos:[108, 70]
+				--button btn_importChicken "Chicken" pos:[178, 70]
+					
+				dropdownlist ddl_import "" items: files across: 2 width: 80 pos:[108, 70]
+				button btn_import "Import" pos:[190, 70]
 			)
-		)
+			
+			button btn_delEmptyLayers "Del Empty Layers"  across:2
+			button btn_delemptyobjects "Del Empty Objects" items:files
+			
+			on theColor changed new_col do (if sceneMaterials["bouncer"] != undefined then sceneMaterials["bouncer"].diffusecolor = new_col)
+			on btn_bouncer pressed do (RMT.CreateBouncer())
+			--on btn_importFX pressed do (importFX())
+			--on btn_importChicken pressed do ( mergemaxfile (userscriptPath + "\\RocketMaxTools\\Assets\\Chicken\\RiggedChicken.max") #select #useSceneMtlDups )
+			
+			on btn_import pressed do
+			(
+				case ddl_import.selected of
+				(
+					"Chicken": mergemaxfile (RMT.script_path + "\\RocketMaxTools\\Assets\\Chicken\\RiggedChicken.max") #select #useSceneMtlDups
+					"FX": RMT.importFX()
+					"Grates": mergemaxfile (RMT.script_path  + "\\RocketMaxTools\\Assets\\Grates\\Grates.max") #select #useSceneMtlDups
+					"Lines": mergemaxfile (RMT.script_path  + "\\RocketMaxTools\\Assets\\Lines\\Lines.max") #select #useSceneMtlDups
+					"Abattoir Lines": mergemaxfile (RMT.script_path  + "\\RocketMaxTools\\Assets\\Lines\\AbattoirLines.max") #select #useSceneMtlDups
+
+				)
+			)
+			
+			--Delete Empty Layers Script-- 
+			on btn_delEmptyLayers pressed do
+			(
+				if querybox "Do you want to delete all empty layers?" beep:true do
+				RMT.DeleteEmptyLayers()
+			)
+			
+			on btn_delemptyobjects pressed do (RMT.DeleteEmptyObjects())
+			on btn_lightLayers pressed do (RMT.sendtoLayer (select lights)  "Lights")
+			on btn_Black pressed do (RMT.sendtoLayer selection "Black")
+			on btn_fullBright pressed do (RMT.sendtoLayer selection "FullBright")	
+			on btn_silhouette pressed do ( RMT.SemiAutoSetup() )
+			on btn_blocker pressed do (RMT.sendtoLayer selection "Blocker")
+			on btn_fx pressed do (RMT.sendtoLayer selection "FX")
+			on btn_main pressed do (RMT.sendtoLayer selection "Main")
+			on btn_ladder pressed do (RMT.sendtoLayer selection "Ladders")
+			
+		) --endRollout
 		
-		--Delete Empty Layers Script-- 
-		on btn_delEmptyLayers pressed do
-		(
-			if querybox "Do you want to delete all empty layers?" beep:true do
-			RMT.DeleteEmptyLayers()
-		)
 		
-		on btn_delemptyobjects pressed do (RMT.DeleteEmptyObjects())
-		on btn_lightLayers pressed do (RMT.sendtoLayer (select lights)  "Lights")
-		on btn_Black pressed do (RMT.sendtoLayer selection "Black")
-		on btn_fullBright pressed do (RMT.sendtoLayer selection "FullBright")	
-		on btn_silhouette pressed do ( ::fileIn( RMT.script_path + "\\RocketMaxTools\1Click.ms") )
-		on btn_blocker pressed do (RMT.sendtoLayer selection "Blocker")
-		on btn_fx pressed do (RMT.sendtoLayer selection "FX")
-		on btn_main pressed do (RMT.sendtoLayer selection "Main")
-		on btn_ladder pressed do (RMT.sendtoLayer selection "Ladders")
-		
-	) --endRollout
-	
-	
-	
-	
-	Rollout dial_doorHelper "Door Helper" width:200
+	rollout ro_doorHelper "Door Helper" width:200
 	(
 		local w = 40
+		
 		group ""
 		(
 			button btn_selectsimilar "Select Similar" tooltip:"Select Similar elements"  width:100 height: 25 across:1
@@ -1494,71 +1644,97 @@
 		button btn_w7 "7" width:w
 		)
 		
-		on btn_selectsimilar pressed do	(selectsimilar()) --door helper
-		on btn_break pressed do( if selection.count != 0 then (prevobj= $; DetachFace thename:"_Breakable"; sendtoLayer (select($_Breakable*)) "Exit_Breakable"; HideLayer "Exit_Breakable";  select prevobj;) )
-		on btn_frame pressed do( if selection.count != 0 then (prevobj= $; DetachFace thename:"_Frame"; sendtoLayer (select($_Frame*)) "Exit_Frame"; HideLayer "Exit_Frame"; select prevobj;) )
-		on btn_hole pressed do( if selection.count != 0 then (prevobj= $; DetachFace thename:"_Hole"; sendtoLayer (select($_Hole*)) "Exit_Hole"; HideLayer "Exit_Hole"; select prevobj;) )
-		on btn_wall pressed do( if selection.count != 0 then (prevobj= $; DetachFace thename:"_Wall"; sendtoLayer (select($_Wall*)) "Exit_Wall"; HideLayer "Exit_Wall"; select prevobj;) )
-		
-			
-		on btn_btoggle pressed do ( ToggleLayer "Exit_Breakable" )
-		on btn_b0 pressed do( if selection.count != 0 then (DetachFace thename:"Exit0_Breakable"; sendtoLayer $ "Exit_Breakable") else selSomething() )
-		on btn_b1 pressed do( if selection.count != 0 then (DetachFace thename:"Exit1_Breakable"; sendtoLayer $ "Exit_Breakable") else selSomething() )
-		on btn_b2 pressed do( if selection.count != 0 then (DetachFace thename:"Exit2_Breakable"; sendtoLayer $ "Exit_Breakable") else selSomething() )
-		on btn_b3 pressed do( if selection.count != 0 then (DetachFace thename:"Exit3_Breakable"; sendtoLayer $ "Exit_Breakable") else selSomething() )
-		on btn_b4 pressed do( if selection.count != 0 then (DetachFace thename:"Exit4_Breakable"; sendtoLayer $ "Exit_Breakable") else selSomething() )
-		on btn_b5 pressed do( if selection.count != 0 then (DetachFace thename:"Exit5_Breakable"; sendtoLayer $ "Exit_Breakable") else selSomething() )
-		on btn_b6 pressed do( if selection.count != 0 then (DetachFace thename:"Exit6_Breakable"; sendtoLayer $ "Exit_Breakable") else selSomething() )
-		on btn_b7 pressed do( if selection.count != 0 then (DetachFace thename:"Exit7_Breakable"; sendtoLayer $ "Exit_Breakable") else selSomething() )
-			
-		on btn_ftoggle pressed do ( ToggleLayer "Exit_Frame" )
-		on btn_f0 pressed do( if selection.count != 0 then (DetachFace thename:"Exit0_Frame"; sendtoLayer $ "Exit_Frame") else selSomething() )
-		on btn_f1 pressed do( if selection.count != 0 then (DetachFace thename:"Exit1_Frame"; sendtoLayer $ "Exit_Frame") else selSomething() )
-		on btn_f2 pressed do( if selection.count != 0 then (DetachFace thename:"Exit2_Frame"; sendtoLayer $ "Exit_Frame") else selSomething() )
-		on btn_f3 pressed do( if selection.count != 0 then (DetachFace thename:"Exit3_Frame"; sendtoLayer $ "Exit_Frame") else selSomething() )
-		on btn_f4 pressed do( if selection.count != 0 then (DetachFace thename:"Exit4_Frame"; sendtoLayer $ "Exit_Frame") else selSomething() )
-		on btn_f5 pressed do( if selection.count != 0 then (DetachFace thename:"Exit5_Frame"; sendtoLayer $ "Exit_Frame") else selSomething() )
-		on btn_f6 pressed do( if selection.count != 0 then (DetachFace thename:"Exit6_Frame"; sendtoLayer $ "Exit_Frame") else selSomething() )
-		on btn_f7 pressed do( if selection.count != 0 then (DetachFace thename:"Exit7_Frame"; sendtoLayer $ "Exit_Frame") else selSomething() )
-		
-		on btn_htoggle pressed do ( ToggleLayer "Exit_Hole" )
-		on btn_h0 pressed do( if selection.count != 0 then (DetachFace thename:"Exit0_Hole"; sendtoLayer $ "Exit_Hole") else selSomething() )
-		on btn_h1 pressed do( if selection.count != 0 then (DetachFace thename:"Exit1_Hole"; sendtoLayer $ "Exit_Hole") else selSomething() )
-		on btn_h2 pressed do( if selection.count != 0 then (DetachFace thename:"Exit2_Hole"; sendtoLayer $ "Exit_Hole") else selSomething() )
-		on btn_h3 pressed do( if selection.count != 0 then (DetachFace thename:"Exit3_Hole"; sendtoLayer $ "Exit_Hole") else selSomething() )
-		on btn_h4 pressed do( if selection.count != 0 then (DetachFace thename:"Exit4_Hole"; sendtoLayer $ "Exit_Hole") else selSomething() )
-		on btn_h5 pressed do( if selection.count != 0 then (DetachFace thename:"Exit5_Hole"; sendtoLayer $ "Exit_Hole") else selSomething() )
-		on btn_h6 pressed do( if selection.count != 0 then (DetachFace thename:"Exit6_Hole"; sendtoLayer $ "Exit_Hole") else selSomething() )
-		on btn_h7 pressed do( if selection.count != 0 then (DetachFace thename:"Exit7_Hole"; sendtoLayer $ "Exit_Hole") else selSomething() )
-		
-		on btn_wtoggle pressed do ( ToggleLayer "Exit_Wall" )
-		on btn_w0 pressed do( if selection.count != 0 then (DetachFace thename:"Exit0_Wall"; sendtoLayer $ "Exit_Wall") else selSomething() )
-		on btn_w1 pressed do( if selection.count != 0 then (DetachFace thename:"Exit1_Wall"; sendtoLayer $ "Exit_Wall") else selSomething() )
-		on btn_w2 pressed do( if selection.count != 0 then (DetachFace thename:"Exit2_Wall"; sendtoLayer $ "Exit_Wall") else selSomething() )
-		on btn_w3 pressed do( if selection.count != 0 then (DetachFace thename:"Exit3_Wall"; sendtoLayer $ "Exit_Wall") else selSomething() )
-		on btn_w4 pressed do( if selection.count != 0 then (DetachFace thename:"Exit4_Wall"; sendtoLayer $ "Exit_Wall") else selSomething() )
-		on btn_w5 pressed do( if selection.count != 0 then (DetachFace thename:"Exit5_Wall"; sendtoLayer $ "Exit_Wall") else selSomething() )
-		on btn_w6 pressed do( if selection.count != 0 then (DetachFace thename:"Exit6_Wall"; sendtoLayer $ "Exit_Wall") else selSomething() )
-		on btn_w7 pressed do( if selection.count != 0 then (DetachFace thename:"Exit7_Wall"; sendtoLayer $ "Exit_Wall") else selSomething() )
+		fn bulkDoor targetname layername =
+		(
+
+			local prevobj
+			if selection.count == 1 then
+			(
+				prevobj = $
+				RMT.DetachFace thename:targetname 
+				RMT.sendtoLayer ( select( getnodebyname(targetname) ) ) layername
+				RMT.HideLayer layername
+				select prevobj
+			)
+			else (messagebox "Select Something") 
 		)
 		
+		fn splitDoor targetname layername =
+		(
+			if selection.count == 1 then
+			(
+				RMT.DetachFace thename:targetname
+				RMT.sendtoLayer ( select( getnodebyname(targetname) ) ) layername
+			)
+			else (messagebox "Select Something") 
+		)
+		
+		on btn_selectsimilar pressed do	( RMT.selectsimilar() ) --door helper
+		
+		on btn_break pressed do( bulkDoor "_Breakable" "Exit_Breakable" )
+		on btn_frame pressed do( bulkDoor "_Frame" "Exit_Frame"  )
+		on btn_hole pressed do( bulkDoor "_Hole" "Exit_Hole")
+		on btn_wall pressed do( bulkDoor "_Wall" "Exit_Wall" )
+		
+			
+		on btn_btoggle pressed do ( RMT.ToggleLayer "Exit_Breakable" )
+		on btn_b0 pressed do ( splitDoor "Exit0_Breakable" "Exit_Breakable")
+		on btn_b1 pressed do ( splitDoor "Exit1_Breakable" "Exit_Breakable")
+		on btn_b2 pressed do ( splitDoor "Exit2_Breakable" "Exit_Breakable")
+		on btn_b3 pressed do ( splitDoor "Exit3_Breakable" "Exit_Breakable")
+		on btn_b4 pressed do ( splitDoor "Exit4_Breakable" "Exit_Breakable")
+		on btn_b5 pressed do ( splitDoor "Exit5_Breakable" "Exit_Breakable")
+		on btn_b6 pressed do ( splitDoor "Exit6_Breakable" "Exit_Breakable")
+		on btn_b7 pressed do ( splitDoor "Exit7_Breakable" "Exit_Breakable")
+			
+		on btn_ftoggle pressed do ( RMT.ToggleLayer "Exit_Frame" )
+		on btn_f0 pressed do ( splitDoor "Exit0_Frame" "Exit_Frame")
+		on btn_f1 pressed do ( splitDoor "Exit1_Frame" "Exit_Frame")
+		on btn_f2 pressed do ( splitDoor "Exit2_Frame" "Exit_Frame")
+		on btn_f3 pressed do ( splitDoor "Exit3_Frame" "Exit_Frame")
+		on btn_f4 pressed do ( splitDoor "Exit4_Frame" "Exit_Frame")
+		on btn_f5 pressed do ( splitDoor "Exit5_Frame" "Exit_Frame")
+		on btn_f6 pressed do ( splitDoor "Exit6_Frame" "Exit_Frame")
+		on btn_f7 pressed do ( splitDoor "Exit7_Frame" "Exit_Frame")
+		
+		on btn_htoggle pressed do ( RMT.ToggleLayer "Exit_Hole" )
+		on btn_h0 pressed do ( splitDoor "Exit0_Hole" "Exit_Hole")
+		on btn_h1 pressed do ( splitDoor "Exit1_Hole" "Exit_Hole")
+		on btn_h2 pressed do ( splitDoor "Exit2_Hole" "Exit_Hole")
+		on btn_h3 pressed do ( splitDoor "Exit3_Hole" "Exit_Hole")
+		on btn_h4 pressed do ( splitDoor "Exit4_Hole" "Exit_Hole")
+		on btn_h5 pressed do ( splitDoor "Exit5_Hole" "Exit_Hole")
+		on btn_h6 pressed do ( splitDoor "Exit6_Hole" "Exit_Hole")
+		on btn_h7 pressed do ( splitDoor "Exit7_Hole" "Exit_Hole")
+		
+		on btn_wtoggle pressed do ( RMT.ToggleLayer "Exit_Wall" )
+		on btn_w0 pressed do ( splitDoor "Exit0_Wall" "Exit_Wall")
+		on btn_w1 pressed do ( splitDoor "Exit1_Wall" "Exit_Wall")
+		on btn_w2 pressed do ( splitDoor "Exit2_Wall" "Exit_Wall")
+		on btn_w3 pressed do ( splitDoor "Exit3_Wall" "Exit_Wall")
+		on btn_w4 pressed do ( splitDoor "Exit4_Wall" "Exit_Wall")
+		on btn_w5 pressed do ( splitDoor "Exit5_Wall" "Exit_Wall")
+		on btn_w6 pressed do ( splitDoor "Exit6_Wall" "Exit_Wall")
+		on btn_w7 pressed do ( splitDoor "Exit7_Wall" "Exit_Wall")
+	) --end rollout
+			
 	rollout ro_TransferUV "Transfer UV"
 	(
 		
-		local ePoly
+		local ePolyFilter
 		local obj
 		
-		fn ePoly obj = classof obj.baseObject == Editable_Poly
+		fn ePolyFilter obj = classof obj.baseObject == Editable_Poly
 
-		pickbutton btn_source "Source" width:140 filter:ePoly
+		pickbutton btn_source "Source" width:140 filter:ePolyFilter
 		spinner spn_sourcechn "uv chn: " range:[1,4,1] type:#integer scale:1
 		
-		pickbutton btn_target "Target" width:140 filter:ePoly
+		pickbutton btn_target "Target" width:140 filter:ePolyFilter
 		spinner spn_targetchn "uv chn: " range:[1,4,1] type:#integer scale:1
 		
 		button btn_Transfer "Transfer!" tooltip: "Transfer UVW Channel 1 only."
 		
-		
+		--remove this soon
 		fn TransferUV = 
 		(
 		ChannelInfo.CopyChannel btn_source.object  3 spn_sourcechn.value
@@ -1568,18 +1744,11 @@
 	-- 	modPanel.setCurrentObject target.modifiers[#UVW_Mapping_Paste]
 		--maxOps.CollapseNodeTo target 2 off
 		)
-		
 
 	-- 	modPanel.setCurrentObject $Terminator002.modifiers[#UVW_Mapping_Paste]
 	-- deleteModifier $Terminator002 1
 	-- maxOps.CollapseNodeTo $Terminator002 2 off
 
-		on spn_sourcechn changed val do
-		(
-	-- 		format "source uv chn: %\n" spn_sourcechn.value
-		)
-		
-		
 		--If the user picked an object, then
 		on btn_source picked obj do
 		(
@@ -1600,11 +1769,12 @@
 		
 		on btn_Transfer pressed do
 		(
-			TransferUV()
+-- 			TransferUV()
+			RMT.TransferUV btn_source.object btn_target.object spn_sourcechn.value spn_targetchn.value
 		)
 	)--end rollout
-	
-	
+		
+		
 	Rollout ro_doorHelper2 "Detachables Helper" 
 	(
 		group ""(
@@ -1626,17 +1796,17 @@
 			(
 				if sceneMaterials["Main"] != undefined do obj.material = sceneMaterials["Main"]
 			)
-			assignDoorMatID()
-			assignOthersMatID() 
+			RMT.assignDoorMatID()
+			RMT.assignOthersMatID() 
 		)
-		on btn_markLadders pressed do ( markLadders() )
-		on btn_bulkDoorDetach pressed do ( BulkDoorDetach() )
-		on btn_singleDoorDetach pressed do ( splitDetachables() )
+		on btn_markLadders pressed do ( RMT.markLadders() )
+		on btn_bulkDoorDetach pressed do ( RMT.BulkDoorDetach() )
+		on btn_singleDoorDetach pressed do ( RMT.splitDetachables() )
 		
-		on btn_splitOthers pressed do ( splitOthers() )
-		on btn_splitLadders pressed do ( splitLadders() )
-	)
-	
+		on btn_splitOthers pressed do ( RMT.splitOthers() )
+		on btn_splitLadders pressed do ( RMT.splitLadders() )
+	) --end rollout
+		
 	rollout ro_animHelper "Anim Helper" width:232 height:488
 	(
 		local originalEndRange = animationrange.end
@@ -1793,15 +1963,132 @@
 		)
 		
 	) --end rollout
+		
+	rollout ro_Menu02 "Geometry Tools"
+	(
+		--button btn_mirrorflip "Mirror and Flip Normals" width: buttonWidth
+		button btn_xform "Reset XForms" pos:[8,8] width:100 tooltip: "Convert to Editable Poly and Resets XForm" across:2
+		button btn_weldVertices "Weld Vertices" pos:[108,8] width:100 tooltip: "Weld ALL vertices of selected objects at 0.001" align:#right
+		button btn_centerPivot "Center Pivot"  pos:[8,30] width: 100 tooltip: "Set pivot to center, selected vertex or edge" across:2
+		button btn_oneobject "One Object" pos:[108,30] width: 100 tooltip: "Attach all objects in selection" 
+		button btn_normalfix "FIX" pos:[208,8] width:38 height: 43
+		
+		on btn_xform pressed do ( RMT.ResetXFPoly() )
+		on btn_weldVertices pressed do ( RMT.WeldVertices() )
+		on btn_centerPivot pressed do ( RMT.CenPivot(); if keyboard.controlPressed do RMT.centerPivotWorld() )
+		on btn_oneobject pressed do( RMT.OneObject() )
+		on btn_normalfix pressed do ( RMT.EditNormalFix() )
+		
+		group "Door Helper" (
+			button btn_selectsimilar "Select Similar" tooltip:"Select Similar elements" pos:[8,80] width:80 
+			button btn_detachFaces "Quick Detach" tooltip:"Detach selected faces as object" pos:[88,80] width:80
+			button btn_autoDoors "Auto Doors"  pos:[8,102] width: 80
+			button btn_doorHelper "Door Helper" tooltip:"Launch door helper tool"  pos:[88,102]  width: 80
+			button btn_doorHelper2 "DoorHelperV2" pos:[168,80] width:70 height: 43 
+		)
+		
+		on btn_selectsimilar pressed do	( RMT.selectsimilar() )
+		on btn_detachFaces pressed do ( RMT.DetachFace() )
+		on btn_autoDoors pressed do ( RMT.AutoDoors() )
+		on btn_doorHelper pressed do ( try(destroyDialog ro_doorHelper)catch(); createDialog ro_doorHelper)
+		on btn_doorHelper2 pressed do ( try(destroyDialog ro_doorHelper2)catch(); createDialog ro_doorHelper2)
+		
+		group "Anim Helper"(
+			button btn_animHelper "Animation Helper" pos:[8,150] 
+		)
+		on btn_animHelper pressed do ( try(destroyDialog ro_animHelper) catch(); createDialog ro_animHelper width:232 height:488)
 
+	)	--endrollout
 	
-	RMT = _RMT_()
+	rollout ro_Menu03 "Bake Tools"
+	(
+		group "Materials"(
+			button btn_SetupMats "SetupMats" across:3 tooltip: "Create common Max materials and fx materials"
+			button btn_CleanMats "CleanMats" tooltip: "Select nothing to clean all, otherwise clean selected objects"
+			button btn_setupFG "SetupFG" tooltip: "Load preset FG settings"
+		)
+
+		group "Lights"(
+			button btn_MRSP "MRSkyPortal" across:2
+			button btn_MROM "MROmni"
+		)
+		
+		group "UVs"(
+			button btn_ApplyUV2 "UV2" tooltip: "Applies a chn 2 uv and collapse the stack" across:2
+			button btn_QPUV2 "QPlanar" tooltip: "Planar map selected. Apply this for the \n \"big flat walls\". " 
+			button btn_UVPacker "UV-Packer" tooltip: "Apply UV-Packer modifier to UV2 with presets and PACK."  across:2
+			button btn_TransferUV "TransferUV" tooltip: "TransferUV"
+		)
+		
+		group "Bake"(
+			button btn_bakeSelected "Bake Mains" tooltip:"Bake Selected Objects with presets to correct folders" across:3
+			dropDownList ddl_bakeSize "" width:50 items:#("128","256", "512", "1024", "2048") selection:5
+			checkbox chkbox_NR "Net Render" checked:false tooltip:"Enable Distributed Rendering."
+		)
+		
+
+		on btn_bakeSelected pressed do( RMT.BakeObject $ (ddl_bakeSize.selected as integer))
+		on chkbox_NR changed theState do ( RMT.mrRender.DistributedEnable = theState; format "Net Render %\n" theState )
+		on btn_setupFG pressed do ( RMT.SetupMR() )
+		on btn_SetupMats pressed do ( RMT.SetupMats() )
+		on btn_CleanMats pressed do ( RMT.CleanMats() )
+		on btn_MRSP pressed do ( RMT.createMRSkyPortal() )
+		on btn_MROM pressed do ( RMT.createMROmni() )
+		on btn_ApplyUV2 pressed do ( RMT.ApplyUV2() )	
+		on btn_QPUV2 pressed do( RMT.QuickPlanarUV2() )
+		on btn_UVPacker pressed do ( RMT.UVPack() )
+		on btn_TransferUV pressed do ( try(destroyDialog ro_TransferUV) catch(); createDialog ro_TransferUV)
+	) --end rollout
+	
+	
+	rollout ro_Menu04 "File Tools"
+	(
+		edittext et_projName "Filename: " text: "L99-S99" fieldWidth:60 height:20 across:3
+		button btn_createProj "Create" tooltip:"Makes project folder and saves file" pos:[130, 7]
+		button btn_backup "Backup" toolip:"Backup a file in working folder" pos:[180, 7]
+		button btn_save2copies "Save 2 Copies" tooltip:"Save current and another copy in Screens" across:3
+		button btn_exportDAE "Export DAE" tooltip:"Export selected as DAE" 
+		button btn_buildandrun "Build & Run" tooltip:"Build then Press any key to run"
+		
+
+		on btn_createProj pressed do
+		(
+			makeDir (working_path + et_projName.text )
+			savemaxFile (working_path + et_projName.text + "\\" + et_projName.text + ".max")
+		)
+		
+		on btn_backup pressed do ( RMT.Backup() )
+		
+		on btn_save2copies pressed do ( RMT.saveCurrentFinal() )  
+			
+		on btn_exportDAE pressed do ( RMT.exportSelectedDAE() )
+		
+		on btn_buildandrun pressed do ( RMT.BuildRun() )
+			
+	) --endrollout
+	
+	rollout ro_Rocketbirds "Rocketbirds"
+	(
+		local imglogo = GetDir #userScripts + "\\RocketMaxTools\\rb.bmp"
+		button btn_logo "" tooltip:"Open Working Folder"align:#center width:256 height:128 images:#(imglogo,undefined,1,1,1,1,1) enabled:true
+		
+		on btn_logo pressed do (shellLaunch "explorer.exe" RMT.working_path)
+			
+	) --endrollout
+
+
+	) ----------------------------------------------------------- End of MAIN ROLLOUTS BlOCK ---------------------------------------------
+	
+	--instace of struct
+	RMT = _RMT_()  
+	
 	RMT.InitVariables()
-	RMT.InitCallbacks()
+	RMT.ExitUI()
+	RMT.CreateUI()
+
+
 	
-	MainFloater = newRolloutFloater "RocketMaxTools" 260 780
-
-	addRollout Menu01 MainFloater
-
-) --end scope
+-- 	if MainFloater !=undefined then closeRolloutFloater MainFloater
+	
+) -- End of tool scope
 
