@@ -15,6 +15,8 @@
 	
 	struct _RMT_
 	(
+		scriptName = "RocketMaxTools",
+		settingsfile = getDir #userscripts + "\\" + scriptName + "\\" + "RMTSettings.ini",
 		script_path,
 		working_path,
 		final_path,
@@ -41,8 +43,11 @@
 		glassID,
 		alphaID,
 		
+		sceneObjects,
+		
 		fn InitVariables =
 		(
+			--RMT.settingsfile = getDir #userscripts + "\\" + RMT.scriptName + "\\" + "RMTSettings.ini"
 			RMT.script_path = getDir #userscripts
 			RMT.working_path = "C:\\Projects\\Cow2\\Assets\\Screens\\working\\"
 			RMT.final_path =  "C:\\Projects\\Cow2\\Assets\\Screens\\"
@@ -54,6 +59,8 @@
 			RMT.ladderID = 500
 			RMT.glassID = 600
 			RMT.alphaID = 700
+			
+			RMT.sceneObjects = RMT.collectSceneObjects()
 		),
 		
 		fn InitTextures =
@@ -97,6 +104,19 @@
 			RMT.DestroyCallbacks()
 			RMT.InitTextures()
 			RMT.InitCallbacks()
+			RMT.collectSceneObjects()
+		),
+		
+		fn getMaxFileName =
+		(
+			local filename = getFilenameFile maxfilename
+			return filename 
+		),
+		
+		fn makeDirName dirName =
+		(
+			if (not (doesfileExist dirName) ) then ( MAKEDir dirName)
+			else ( format "% dirName exists! \n" dirName )
 		),
 		
 		fn OneObject = 
@@ -447,8 +467,7 @@
 			
 			render_path = RMT.working_path + getFileNameFile maxFileName + "\\"
 
-			if (not (doesfileExist render_path) ) then ( MAKEDir render_path)
-			else ()
+			RMT.makeDirName(render_path)
 			
 			/* if (not (doesfileExist render_path) ) then ( MAKEDir render_path)
 			else
@@ -782,6 +801,30 @@
 			sendtoLayer $ "Bouncer"
 		)
 
+	),
+	
+	fn importFX = 
+	(
+		
+		mergemaxfile (RMT.script_path + "\\RocketMaxTools\\Assets\\FX\\FX.max") #select #useSceneMtlDups
+		
+		if scenematerials["Multiply"] != undefined then
+		(
+			$FXMultiply*.material = scenematerials["Multiply"] 
+		) 
+		else
+		(
+			print ("Please setup Multiply material.")
+		)
+		
+		if scenematerials["Alpha"] != undefined then
+		(
+			$FXAlpha*.material = scenematerials["Alpha"] 
+		) 
+		else
+		(
+			print ("Please setup Alpha material.")
+		)
 	),
 	
 	fn QuickPlanarUV2 =
@@ -1127,58 +1170,42 @@
 		polyop.detachFaces $ selectedFaces asNode:true name: objname
 	),
 	
-	fn collectGlassObj =
+	
+	fn collectNodesbyName namepattern =
 	(
 		local a = #()
-		
-		for obj in objects do
+
+		for obj in RMT.sceneObjects do
 		(
-			if obj.name == "*Glass-*" then
+			if matchpattern obj.name pattern:namepattern then
 			(
-				append a getNodeByName(obj.name)
+				append a (getNodeByName(obj.name))
+				format "Collected % based on % pattern \n" a namepattern 
 			)
 		)
-		return a
+		a
 	),
 	
+	fn collectSceneObjects =
+	(
+		RMT.sceneObjects = for obj in objects collect obj
+	),
+
 	fn assignOthersMatID =
 	(
-		for obj in objects do
-		(
-			if matchPattern obj.name pattern: "*Glass-*" then
-			(
-				print obj.name
-				polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 600
-			)
-			
-			if matchPattern obj.name pattern: "*FireExtinguisherAlpha-*" then
-			(
-				print obj.name
-				polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 700
-			)
-			
-			if matchPattern obj.name pattern: "Glass" then
-			(
-				print obj.name
-				polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 600
-			)
-			
-			if matchPattern obj.name pattern: "FireExtAlpha" then
-			(
-				print obj.name
-				polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 700
-			)
-			
-			if matchPattern obj.name pattern: "*Ladder*" then
-			(
-				print obj.name
-				polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 500
-			)
-		)	
+			RMT.collectSceneObjects()
+
+			RMT.assignObjGenericMatID (RMT.collectNodesbyName "*Glass-*")  RMT.glassID
+			RMT.assignObjGenericMatID (RMT.collectNodesbyName "*Glass*")  RMT.glassID
+			RMT.assignObjGenericMatID (RMT.collectNodesbyName "*FireExtinguisherAlpha-*")  RMT.alphaID
+			RMT.assignObjGenericMatID (RMT.collectNodesbyName "*FireExtAlpha*")  RMT.alphaID
+			RMT.assignObjGenericMatID (RMT.collectNodesbyName "*Ladder*")  RMT.ladderID
+
 	),
 	
 	fn assignDoorMatID =
 	(
+
 		for obj in objects do
 		(
 			case obj.name of
@@ -1224,9 +1251,9 @@
 	),
 	
 	
-	fn assignObjGenericMatID id =
+	fn assignObjGenericMatID sel id =
 	(
-		for obj in selection do
+		for obj in sel do
 		(
 			polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} id   
 		)
@@ -1253,7 +1280,7 @@
 	
 	fn markLadders = 
 	(
-		RMT.assignFaceGenericMatID RMT.glassID
+		RMT.assignFaceGenericMatID RMT.ladderID
 		subobjectlevel = 0
 	),
 	
@@ -1481,10 +1508,13 @@
 	
 	fn CreateUI =
 	(
+		
 		RMT.InitCallbacks()
 		
 		rf_MainFloater = newRolloutFloater "RocketMaxTools" 260 780
-
+		rf_MainFloater.pos.x = (getINISetting RMT.settingsfile "General" "Window Pos X") as integer
+		rf_MainFloater.pos.y = (getINISetting RMT.settingsfile "General" "Window Pos Y") as integer
+		
 		addRollout ro_Menu01 rf_MainFloater
 		addRollout ro_Menu02 rf_MainFloater
 		addRollout ro_Menu03 rf_MainFloater
@@ -1492,18 +1522,25 @@
 		
 		addRollout ro_animHelper rf_mainFloater
 		addRollout ro_TransferUV rf_MainFloater
-		addrollout ro_doorHelper rf_MainFloater
+		--addrollout ro_doorHelper rf_MainFloater
 		addRollout ro_Rocketbirds rf_MainFloater
+
 		
 	),
 	
 	fn ExitUI =
 	(
+		--
+		--setINISetting 
+		setINISetting RMT.settingsfile "General" "Window Pos X" ((rf_MainFloater.pos.x as integer) as string)
+		setINISetting RMT.settingsfile "General" "Window Pos Y" ((rf_MainFloater.pos.y as integer) as string)
+		--
+		
 		
 		RMT.DestroyCallbacks()
 		
 		if rf_MainFloater !=undefined then closeRolloutFloater rf_MainFloater
-		if dial_doorHelper !=undefined then destroyDialog dial_doorHelper
+		if ro_doorHelper !=undefined then destroyDialog ro_doorHelper
 		if ro_TransferUV !=undefined then destroyDialog ro_TransferUV
 		if ro_doorHelper2 !=undefined then destroyDialog ro_doorHelper2
 		if ro_animHelper !=undefined then destroyDialog ro_animHelper
@@ -1517,39 +1554,49 @@
 ----------------------------------------------------------- Start of MAIN ROLLOUTS BlOCK ---------------------------------------------
 	( -- MAIN ROLLOUTS
 	
-		rollout ro_Menu01 "Layering Tools"
+		rollout ro_Menu01 "Layering Tools" width:256 height:144
 		(
-			button btn_lightLayers "Lights"  pos:[8,8] width: 50
-			button btn_Black "Black"  tooltip:"Black" pos:[58,8] width: 50
-			button btn_fullBright "FB" tooltip:"Full Bright" pos:[108,8] width: 50
-			button btn_silhouette "1ClickSemi"  pos:[158,8] width: 50
+			local importList = #( "Chicken", "FX", "Grates", "Lines", "Abattoir Lines")
+			
+			button btn_lightLayers "Lights" pos:[8,8] width:50 height:21
+			button btn_Black "Black" pos:[60,8] width:50 height:21 toolTip:"Black"
+			button btn_fullBright "FB" pos:[108,8] width:50 height:21 toolTip:"Full Bright"
+			button btn_silhouette "1ClickSemi" pos:[159,7] width:81 height:21
 				
-			button btn_blocker "Blocker" pos:[8,30] width: 50
-			button btn_fx "FX" pos:[58,30] width: 50
-			button btn_main "Main" pos:[108,30] width: 50
-			button btn_ladder "Ladders" pos:[158,30] width:50
+			button btn_blocker "Blocker" pos:[8,32] width:50 height:21
+			button btn_fx "FX" pos:[60,32] width:50 height:21
+			button btn_main "Main" pos:[112,32] width:50 height:21
+			button btn_ladder "Ladders" pos:[164,32] width:50 height:21
 			
-			local files = #( "Chicken", "FX", "Grates", "Lines", "Abattoir Lines")
+			groupBox grp1 "" pos:[4,56] width:252 height:42
+			button btn_bouncer "Bouncer" pos:[8,70] width:50 height:21
+			colorPicker theColor "" pos:[58,70] width:44 height:20 color:[50,50,50]
+			dropdownList ddl_import "" pos:[108,70] width:80 height:21 items:#("Chicken", "FX", "Grates", "Lines", "Abattoir Lines") across:2
+			button btn_import "Import" pos:[190,70] width:45 height:21
+			
+			button btn_delEmptyLayers "Del Empty Layers" pos:[8,104] width:100 height:24 across:2
+			button btn_delemptyobjects "Del Empty Objects" pos:[112,104] width:103 height:24 items:#("Chicken", "FX", "Grates", "Lines", "Abattoir Lines")
 
-			group ""
-			(
-				button btn_bouncer "Bouncer" pos:[8,70] width: 50
-				colorpicker theColor "" color:[50,50,50] pos:[58,70]
-				--button btn_importFX "Import FX" pos:[108, 70]
-				--button btn_importChicken "Chicken" pos:[178, 70]
-					
-				dropdownlist ddl_import "" items: files across: 2 width: 80 pos:[108, 70]
-				button btn_import "Import" pos:[190, 70]
-			)
-			
-			button btn_delEmptyLayers "Del Empty Layers"  across:2
-			button btn_delemptyobjects "Del Empty Objects" items:files
-			
-			on theColor changed new_col do (if sceneMaterials["bouncer"] != undefined then sceneMaterials["bouncer"].diffusecolor = new_col)
-			on btn_bouncer pressed do (RMT.CreateBouncer())
-			--on btn_importFX pressed do (importFX())
-			--on btn_importChicken pressed do ( mergemaxfile (userscriptPath + "\\RocketMaxTools\\Assets\\Chicken\\RiggedChicken.max") #select #useSceneMtlDups )
-			
+			on btn_lightLayers pressed do
+				(RMT.sendtoLayer (select lights)  "Lights")
+			on btn_Black pressed do
+				(RMT.sendtoLayer selection "Black")
+			on btn_fullBright pressed do
+				(RMT.sendtoLayer selection "FullBright")
+			on btn_silhouette pressed do
+				( RMT.SemiAutoSetup() )
+			on btn_blocker pressed do
+				(RMT.sendtoLayer selection "Blocker")
+			on btn_fx pressed do
+				(RMT.sendtoLayer selection "FX")
+			on btn_main pressed do
+				(RMT.sendtoLayer selection "Main")
+			on btn_ladder pressed do
+				(RMT.sendtoLayer selection "Ladders")
+			on btn_bouncer pressed do
+				(RMT.CreateBouncer())
+			on theColor changed new_col do
+				(if sceneMaterials["bouncer"] != undefined then sceneMaterials["bouncer"].diffusecolor = new_col)
 			on btn_import pressed do
 			(
 				case ddl_import.selected of
@@ -1559,28 +1606,18 @@
 					"Grates": mergemaxfile (RMT.script_path  + "\\RocketMaxTools\\Assets\\Grates\\Grates.max") #select #useSceneMtlDups
 					"Lines": mergemaxfile (RMT.script_path  + "\\RocketMaxTools\\Assets\\Lines\\Lines.max") #select #useSceneMtlDups
 					"Abattoir Lines": mergemaxfile (RMT.script_path  + "\\RocketMaxTools\\Assets\\Lines\\AbattoirLines.max") #select #useSceneMtlDups
-
+			
 				)
 			)
-			
-			--Delete Empty Layers Script-- 
 			on btn_delEmptyLayers pressed do
 			(
 				if querybox "Do you want to delete all empty layers?" beep:true do
 				RMT.DeleteEmptyLayers()
 			)
-			
-			on btn_delemptyobjects pressed do (RMT.DeleteEmptyObjects())
-			on btn_lightLayers pressed do (RMT.sendtoLayer (select lights)  "Lights")
-			on btn_Black pressed do (RMT.sendtoLayer selection "Black")
-			on btn_fullBright pressed do (RMT.sendtoLayer selection "FullBright")	
-			on btn_silhouette pressed do ( RMT.SemiAutoSetup() )
-			on btn_blocker pressed do (RMT.sendtoLayer selection "Blocker")
-			on btn_fx pressed do (RMT.sendtoLayer selection "FX")
-			on btn_main pressed do (RMT.sendtoLayer selection "Main")
-			on btn_ladder pressed do (RMT.sendtoLayer selection "Ladders")
-			
-		) --endRollout
+			on btn_delemptyobjects pressed do
+				(RMT.DeleteEmptyObjects())
+		)
+		--endRollout
 		
 		
 	rollout ro_doorHelper "Door Helper" width:200
@@ -1962,7 +1999,8 @@
 			)
 		)
 		
-	) --end rollout
+	)
+--end rollout
 		
 	rollout ro_Menu02 "Geometry Tools"
 	(
@@ -1980,11 +2018,11 @@
 		on btn_normalfix pressed do ( RMT.EditNormalFix() )
 		
 		group "Door Helper" (
-			button btn_selectsimilar "Select Similar" tooltip:"Select Similar elements" pos:[8,80] width:80 
-			button btn_detachFaces "Quick Detach" tooltip:"Detach selected faces as object" pos:[88,80] width:80
-			button btn_autoDoors "Auto Doors"  pos:[8,102] width: 80
-			button btn_doorHelper "Door Helper" tooltip:"Launch door helper tool"  pos:[88,102]  width: 80
-			button btn_doorHelper2 "DoorHelperV2" pos:[168,80] width:70 height: 43 
+		button btn_selectsimilar "Select Similar" tooltip:"Select Similar elements" pos:[8,80] width:80 
+		button btn_detachFaces "Quick Detach" tooltip:"Detach selected faces as object" pos:[88,80] width:80
+		button btn_autoDoors "Auto Doors"  pos:[8,102] width: 80
+		button btn_doorHelper "Door Helper" tooltip:"Launch door helper tool"  pos:[88,102]  width: 80
+		button btn_doorHelper2 "DoorHelperV2" pos:[168,80] width:70 height: 43 
 		)
 		
 		on btn_selectsimilar pressed do	( RMT.selectsimilar() )
@@ -1994,7 +2032,7 @@
 		on btn_doorHelper2 pressed do ( try(destroyDialog ro_doorHelper2)catch(); createDialog ro_doorHelper2)
 		
 		group "Anim Helper"(
-			button btn_animHelper "Animation Helper" pos:[8,150] 
+		button btn_animHelper "Animation Helper" pos:[8,150] 
 		)
 		on btn_animHelper pressed do ( try(destroyDialog ro_animHelper) catch(); createDialog ro_animHelper width:232 height:488)
 
@@ -2041,33 +2079,35 @@
 	) --end rollout
 	
 	
-	rollout ro_Menu04 "File Tools"
+	
+	rollout ro_Menu04 "File Tools" width:256 height:72
 	(
-		edittext et_projName "Filename: " text: "L99-S99" fieldWidth:60 height:20 across:3
-		button btn_createProj "Create" tooltip:"Makes project folder and saves file" pos:[130, 7]
-		button btn_backup "Backup" toolip:"Backup a file in working folder" pos:[180, 7]
-		button btn_save2copies "Save 2 Copies" tooltip:"Save current and another copy in Screens" across:3
-		button btn_exportDAE "Export DAE" tooltip:"Export selected as DAE" 
-		button btn_buildandrun "Build & Run" tooltip:"Build then Press any key to run"
-		
+		edittext et_projName "L99-S99" pos:[8,8] width:112 height:20 fieldwidth:60 across:3
+		button btn_createProj "Create" pos:[130,7] width:47 height:24 toolTip:"Makes project folder and saves file"
+		button btn_backup "Backup" pos:[184,8] width:56 height:24 toolip:"Backup a file in working folder"
+		button btn_save2copies "Save 2 Copies" pos:[8,40] width:85 height:21 toolTip:"Save current and another copy in Screens" across:3
+		button btn_exportDAE "Export DAE" pos:[96,40] width:70 height:21 toolTip:"Export selected as DAE" 
+ 
+ 
+		button btn_buildandrun "Build & Run" pos:[168,40] width:70 height:21 toolTip:"Build then Press any key to run"
 
 		on btn_createProj pressed do
 		(
 			makeDir (working_path + et_projName.text )
 			savemaxFile (working_path + et_projName.text + "\\" + et_projName.text + ".max")
 		)
-		
-		on btn_backup pressed do ( RMT.Backup() )
-		
-		on btn_save2copies pressed do ( RMT.saveCurrentFinal() )  
-			
-		on btn_exportDAE pressed do ( RMT.exportSelectedDAE() )
-		
-		on btn_buildandrun pressed do ( RMT.BuildRun() )
-			
-	) --endrollout
+		on btn_backup pressed do
+			( RMT.Backup() )
+		on btn_save2copies pressed do
+			( RMT.saveCurrentFinal() )
+		on btn_exportDAE pressed do
+			( RMT.exportSelectedDAE() )
+		on btn_buildandrun pressed do
+			( RMT.BuildRun() )
+	)
+	--endrollout
 	
-	rollout ro_Rocketbirds "Rocketbirds"
+	rollout ro_Rocketbirds "Rocketbirds" rolledup:true
 	(
 		local imglogo = GetDir #userScripts + "\\RocketMaxTools\\rb.bmp"
 		button btn_logo "" tooltip:"Open Working Folder"align:#center width:256 height:128 images:#(imglogo,undefined,1,1,1,1,1) enabled:true
@@ -2081,10 +2121,10 @@
 	
 	--instace of struct
 	RMT = _RMT_()  
-	
-	RMT.InitVariables()
 	RMT.ExitUI()
 	RMT.CreateUI()
+	RMT.InitVariables()
+
 
 
 	
