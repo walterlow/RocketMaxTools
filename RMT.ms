@@ -1399,8 +1399,6 @@
 		local mfn = getfilenamefile maxfilename
 		local fList, fCount, fVer, fOut, fFilter, a, ver
 		
--- 		working_path = "C:\\Projects\\Cow2\\Assets\\Screens\\working\\" 
-
 		fList = getfiles( RMT.working_path + mfn + "\\" + "*_Backup_*.max" )
 		fCount = 0
 
@@ -1450,10 +1448,12 @@
 
 			suspendEditing which:#modify
 	
-			if (not (doesFileExist (RMT.working_path + fileTitle))) do
-			(
-				makeDir  (RMT.working_path + fileTitle)
-			)
+-- 			if (not (doesFileExist (RMT.working_path + fileTitle))) do
+-- 			(
+-- 				makeDir  (RMT.working_path + fileTitle)
+-- 			)
+			
+			RMT.makeDirName(RMT.working_path + fileTitle)
 				
 			savemaxFile (RMT.working_path + fileTitle + "\\"+ fileTitle + ".max")
 				
@@ -1468,6 +1468,7 @@
 			RMT.ResetXFPoly()
 			RMT.AutoDoors()
 			RMT.assignDoorMatID()
+			RMT.assignOthersMatID()
 			RMT.SetupMats()
 			$*.material = meditmaterials[1]
 			RMT.createBouncer()
@@ -1491,8 +1492,9 @@
 
 			for o in objects where (classof o.baseobject == Editable_Poly) do
 			(
-				ChannelInfo.CopyChannel o 3 1
-				ChannelInfo.PasteChannel o 3 2
+-- 				ChannelInfo.CopyChannel o 3 1
+-- 				ChannelInfo.PasteChannel o 3 2	
+				RMT.TransferUV o o 1 2
 				collapseStack o
 			)
 			
@@ -1522,7 +1524,7 @@
 		
 		addRollout ro_animHelper rf_mainFloater
 		addRollout ro_TransferUV rf_MainFloater
-		--addrollout ro_doorHelper rf_MainFloater
+		addrollout ro_doorHelper rf_MainFloater
 		addRollout ro_Rocketbirds rf_MainFloater
 
 		
@@ -1532,8 +1534,8 @@
 	(
 		--
 		--setINISetting 
-		setINISetting RMT.settingsfile "General" "Window Pos X" ((rf_MainFloater.pos.x as integer) as string)
-		setINISetting RMT.settingsfile "General" "Window Pos Y" ((rf_MainFloater.pos.y as integer) as string)
+		try( setINISetting RMT.settingsfile "General" "Window Pos X" ((rf_MainFloater.pos.x as integer) as string) )catch();
+		try( setINISetting RMT.settingsfile "General" "Window Pos Y" ((rf_MainFloater.pos.y as integer) as string) )catch();
 		--
 		
 		
@@ -1544,6 +1546,9 @@
 		if ro_TransferUV !=undefined then destroyDialog ro_TransferUV
 		if ro_doorHelper2 !=undefined then destroyDialog ro_doorHelper2
 		if ro_animHelper !=undefined then destroyDialog ro_animHelper
+			
+		
+		
 	)
 
 
@@ -2082,7 +2087,7 @@
 	
 	rollout ro_Menu04 "File Tools" width:256 height:72
 	(
-		edittext et_projName "L99-S99" pos:[8,8] width:112 height:20 fieldwidth:60 across:3
+		edittext et_projName "Filename:" pos:[8,8] width:112 height:20 fieldwidth:60 text:"L99-S99" across:3
 		button btn_createProj "Create" pos:[130,7] width:47 height:24 toolTip:"Makes project folder and saves file"
 		button btn_backup "Backup" pos:[184,8] width:56 height:24 toolip:"Backup a file in working folder"
 		button btn_save2copies "Save 2 Copies" pos:[8,40] width:85 height:21 toolTip:"Save current and another copy in Screens" across:3
