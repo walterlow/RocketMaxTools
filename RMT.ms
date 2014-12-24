@@ -1,4 +1,5 @@
 ( 
+	--Global UI vars
 	
 	global RMT
 	
@@ -13,6 +14,13 @@
 	global ro_Menu04
 	global ro_RocketBirds
 	
+	--destroy previous instances of floating dialogs
+	try(closeRolloutFloater rf_MainFloater)catch();
+	try(DestroyDialog ro_doorHelper)catch();
+	try(DestroyDialog ro_doorHelper2)catch();
+	try(DestroyDialog ro_TransferUV)catch();
+	try(DestroyDialog ro_animHelper)catch();
+
 	struct _RMT_
 	(
 		scriptName = "RocketMaxTools",
@@ -55,6 +63,7 @@
 			RMT.ext = ".png"
 			RMT.mrRender = renderers.current = mental_ray_renderer()
 			RMT.slRender = Default_Scanline_Renderer()
+			RMT.SetupFG()
 			
 			RMT.ladderID = 500
 			RMT.glassID = 600
@@ -91,6 +100,8 @@
 			callbacks.addScript #systemPostNew "RMT.callback_SceneChanged()" id:#RMT_callback_RefreshUI
 			callbacks.addScript #systemPostReset "RMT.callback_SceneChanged()" id:#RMT_callback_RefreshUI
 			callbacks.addScript #filePostOpen "RMT.callback_SceneChanged()" id:#RMT_callback_RefreshUI
+		
+			--todo: consider removing
 			callbacks.addScript #filePostSave "RMT.callback_SceneChanged()" id:#RMT_callback_RefreshUI
 		),
 		
@@ -102,9 +113,11 @@
 		fn callback_SceneChanged =
 		(
 			RMT.DestroyCallbacks()
-			RMT.InitTextures()
+			RMT.InitVariables()
 			RMT.InitCallbacks()
-			RMT.collectSceneObjects()
+			
+			--set net render to state of checkbox
+			RMT.mrRender.DistributedEnable = ro_Menu03.chkbox_NR.checked
 		),
 		
 		fn getMaxFileName =
@@ -407,7 +420,7 @@
 			)
 		),
 		
-		fn SetupMR =
+		fn SetupFG =
 		(
 			
 -- 			if (renderers.current != RMT.mrRender) then renderers.current = RMT.mrRender
@@ -592,6 +605,32 @@
 		mrom.useFarAtten = true
 		mrom.farAttenStart = 0.33
 		mrom.farAttenEnd = 4.396
+	),
+	
+	fn SetVertColorWhite =
+	(
+		local objs = getCurrentSelection()
+		if objs.count != 0 then
+		(
+			for obj in objs do
+			(
+				polyop.setVertColor obj 0 #{1..getNumVerts obj} [255,255,255]
+			)
+			format "vertex color set to white.\n"
+		)
+	),
+
+	fn SetVertColorBlack =
+	(
+		local objs = getCurrentSelection()
+		if objs.count != 0 then
+		(
+			for obj in objs do
+			(
+			polyop.setVertColor obj 0 #{1..getNumVerts obj} [0,0,0]
+			)
+			format "vertex color set to black.\n"
+		)
 	),
 	
 	fn sendtoLayer obj layerName =
@@ -1454,8 +1493,22 @@
 -- 			)
 			
 			RMT.makeDirName(RMT.working_path + fileTitle)
-				
-			savemaxFile (RMT.working_path + fileTitle + "\\"+ fileTitle + ".max")
+			
+			local filename = RMT.working_path + fileTitle + "\\"+ fileTitle + ".max"
+			
+			if existFile filename then
+			(
+				if querybox (filename +" exists. Overwrite?") then
+				(
+					savemaxFile (RMT.working_path + fileTitle + "\\"+ fileTitle + ".max")
+				) else
+				(
+					messageBox "Did nt save"
+					return;
+				)
+			)
+			
+-- 			savemaxFile (RMT.working_path + fileTitle + "\\"+ fileTitle + ".max")
 				
 			importFile importedFile #noPrompt using:DAEIMP
 
@@ -1470,6 +1523,7 @@
 			RMT.assignDoorMatID()
 			RMT.assignOthersMatID()
 			RMT.SetupMats()
+			RMT.SetupFG()
 			$*.material = meditmaterials[1]
 			RMT.createBouncer()
 			RMT.sendtoLayer $Bouncer "Bouncer"
@@ -1516,15 +1570,18 @@
 		rf_MainFloater = newRolloutFloater "RocketMaxTools" 260 780
 		rf_MainFloater.pos.x = (getINISetting RMT.settingsfile "General" "Window Pos X") as integer
 		rf_MainFloater.pos.y = (getINISetting RMT.settingsfile "General" "Window Pos Y") as integer
-		
+
 		addRollout ro_Menu01 rf_MainFloater
 		addRollout ro_Menu02 rf_MainFloater
 		addRollout ro_Menu03 rf_MainFloater
 		addRollout ro_Menu04 rf_MainFloater
 		
-		addRollout ro_animHelper rf_mainFloater
-		addRollout ro_TransferUV rf_MainFloater
-		addrollout ro_doorHelper rf_MainFloater
+		--Add these lines if you want everythign to be part of the main UI, (no floating dialogs)
+		
+-- 		addRollout ro_animHelper rf_mainFloater
+-- 		addRollout ro_TransferUV rf_MainFloater
+-- 		addrollout ro_doorHelper rf_MainFloater
+		
 		addRollout ro_Rocketbirds rf_MainFloater
 
 		
@@ -1532,25 +1589,23 @@
 	
 	fn ExitUI =
 	(
-		--
 		--setINISetting 
+		--save position for main rollout
 		try( setINISetting RMT.settingsfile "General" "Window Pos X" ((rf_MainFloater.pos.x as integer) as string) )catch();
 		try( setINISetting RMT.settingsfile "General" "Window Pos Y" ((rf_MainFloater.pos.y as integer) as string) )catch();
-		--
-		
-		
+	
 		RMT.DestroyCallbacks()
-		
-		if rf_MainFloater !=undefined then closeRolloutFloater rf_MainFloater
-		if ro_doorHelper !=undefined then destroyDialog ro_doorHelper
-		if ro_TransferUV !=undefined then destroyDialog ro_TransferUV
-		if ro_doorHelper2 !=undefined then destroyDialog ro_doorHelper2
-		if ro_animHelper !=undefined then destroyDialog ro_animHelper
-			
-		
-		
-	)
 
+		--TODO: consider removing
+		
+-- 		if rf_MainFloater !=undefined then closeRolloutFloater rf_MainFloater
+-- 		if ro_doorHelper !=undefined then destroyDialog ro_doorHelper
+-- 		if ro_TransferUV !=undefined then destroyDialog ro_TransferUV
+-- 		if ro_doorHelper2 !=undefined then destroyDialog ro_doorHelper2
+-- 		if ro_animHelper !=undefined then destroyDialog ro_animHelper
+-- 			
+		
+	) -- 
 
 	) -- end RMT struct
 
@@ -2007,81 +2062,106 @@
 	)
 --end rollout
 		
-	rollout ro_Menu02 "Geometry Tools"
+	rollout ro_Menu02 "Geometry Tools" width:260 height:190
 	(
 		--button btn_mirrorflip "Mirror and Flip Normals" width: buttonWidth
-		button btn_xform "Reset XForms" pos:[8,8] width:100 tooltip: "Convert to Editable Poly and Resets XForm" across:2
-		button btn_weldVertices "Weld Vertices" pos:[108,8] width:100 tooltip: "Weld ALL vertices of selected objects at 0.001" align:#right
-		button btn_centerPivot "Center Pivot"  pos:[8,30] width: 100 tooltip: "Set pivot to center, selected vertex or edge" across:2
-		button btn_oneobject "One Object" pos:[108,30] width: 100 tooltip: "Attach all objects in selection" 
-		button btn_normalfix "FIX" pos:[208,8] width:38 height: 43
+		button btn_xform "Reset XForms" pos:[8,8] width:100 height:21 toolTip:"Convert to Editable Poly and Resets XForm" across:2
+		button btn_weldVertices "Weld Vertices" pos:[108,8] width:100 height:21 toolTip:"Weld ALL vertices of selected objects at 0.001"
+		button btn_centerPivot "Center Pivot" pos:[8,30] width:100 height:21 toolTip:"Set pivot to center, selected vertex or edge" across:2
+		button btn_oneobject "One Object" pos:[108,30] width:100 height:21 toolTip:"Attach all objects in selection" 
+ 
+ 
+		button btn_normalfix "FIX" pos:[208,8] width:38 height:43
 		
-		on btn_xform pressed do ( RMT.ResetXFPoly() )
-		on btn_weldVertices pressed do ( RMT.WeldVertices() )
-		on btn_centerPivot pressed do ( RMT.CenPivot(); if keyboard.controlPressed do RMT.centerPivotWorld() )
-		on btn_oneobject pressed do( RMT.OneObject() )
-		on btn_normalfix pressed do ( RMT.EditNormalFix() )
 		
-		group "Door Helper" (
-		button btn_selectsimilar "Select Similar" tooltip:"Select Similar elements" pos:[8,80] width:80 
-		button btn_detachFaces "Quick Detach" tooltip:"Detach selected faces as object" pos:[88,80] width:80
-		button btn_autoDoors "Auto Doors"  pos:[8,102] width: 80
-		button btn_doorHelper "Door Helper" tooltip:"Launch door helper tool"  pos:[88,102]  width: 80
-		button btn_doorHelper2 "DoorHelperV2" pos:[168,80] width:70 height: 43 
-		)
+		GroupBox grp1 "Door Helper" pos:[2,56] width:256 height:73
+		button btn_selectsimilar "Select Similar" pos:[8,80] width:80 height:21 toolTip:"Select Similar elements" 
+ 
+ 
+		button btn_detachFaces "Quick Detach" pos:[88,80] width:80 height:21 toolTip:"Detach selected faces as object"
+		button btn_autoDoors "Auto Doors" pos:[8,102] width:80 height:21
+		button btn_doorHelper "Door Helper" pos:[88,102] width:80 height:21 toolTip:"Launch door helper tool"
+		button btn_doorHelper2 "DoorHelperV2" pos:[168,80] width:80 height:43 
+ 
 		
-		on btn_selectsimilar pressed do	( RMT.selectsimilar() )
-		on btn_detachFaces pressed do ( RMT.DetachFace() )
-		on btn_autoDoors pressed do ( RMT.AutoDoors() )
-		on btn_doorHelper pressed do ( try(destroyDialog ro_doorHelper)catch(); createDialog ro_doorHelper)
-		on btn_doorHelper2 pressed do ( try(destroyDialog ro_doorHelper2)catch(); createDialog ro_doorHelper2)
 		
-		group "Anim Helper"(
-		button btn_animHelper "Animation Helper" pos:[8,150] 
-		)
-		on btn_animHelper pressed do ( try(destroyDialog ro_animHelper) catch(); createDialog ro_animHelper width:232 height:488)
-
-	)	--endrollout
+		GroupBox grp2 "Anim Helper" pos:[2,134] width:256 height:43
+		button btn_animHelper "Animation Helper" pos:[8,152] width:96 height:21
+		button btn_setvertwhite "SetVertWhite" pos:[106,152] width:72 height:21
+		button btn_setvertblack "SetVertBlack" pos:[178,152] width:72 height:21
+		
+		on btn_xform pressed do
+			( RMT.ResetXFPoly() )
+		on btn_weldVertices pressed do
+			( RMT.WeldVertices() )
+		on btn_centerPivot pressed do
+			( RMT.CenPivot(); if keyboard.controlPressed do RMT.centerPivotWorld() )
+		on btn_oneobject pressed do
+			( RMT.OneObject() )
+		on btn_normalfix pressed do
+			( RMT.EditNormalFix() )
+		on btn_selectsimilar pressed do
+			( RMT.selectsimilar() )
+		on btn_detachFaces pressed do
+			( RMT.DetachFace() )
+		on btn_autoDoors pressed do
+			( RMT.AutoDoors() )
+		on btn_doorHelper pressed do
+			( try(destroyDialog ro_doorHelper)catch(); createDialog ro_doorHelper)
+		on btn_doorHelper2 pressed do
+			( try(destroyDialog ro_doorHelper2)catch(); createDialog ro_doorHelper2)
+		on btn_animHelper pressed do
+			( try(destroyDialog ro_animHelper) catch(); createDialog ro_animHelper width:232 height:488)
+		on btn_setvertwhite pressed do (RMT.SetVertColorWhite();)
+		on btn_setvertblack pressed do (RMT.SetVertColorBlack();)
+	)
 	
-	rollout ro_Menu03 "Bake Tools"
+	rollout ro_Menu03 "Bake Tools" width:260 height:224
 	(
-		group "Materials"(
-			button btn_SetupMats "SetupMats" across:3 tooltip: "Create common Max materials and fx materials"
-			button btn_CleanMats "CleanMats" tooltip: "Select nothing to clean all, otherwise clean selected objects"
-			button btn_setupFG "SetupFG" tooltip: "Load preset FG settings"
-		)
+		groupBox grp1 "Materials" pos:[4,7] width:254 height:46
+		button btn_SetupMats "SetupMats" pos:[8,24] width:67 height:21 toolTip:"Create common Max materials and fx materials" across:3
+		button btn_CleanMats "CleanMats" pos:[80,24] width:66 height:21 toolTip:"Select nothing to clean all, otherwise clean selected objects"
+-- 		button btn_setupFG "SetupFG" pos:[152,24] width:58 height:21 toolTip:"Load preset FG settings"
 
-		group "Lights"(
-			button btn_MRSP "MRSkyPortal" across:2
-			button btn_MROM "MROmni"
-		)
+		groupBox grp2 "Lights" pos:[4,58] width:254 height:46
+		button btn_MRSP "MRSkyPortal" pos:[8,77] width:78 height:21 across:2
+		button btn_MROM "MROmni" pos:[88,77] width:57 height:21
 		
-		group "UVs"(
-			button btn_ApplyUV2 "UV2" tooltip: "Applies a chn 2 uv and collapse the stack" across:2
-			button btn_QPUV2 "QPlanar" tooltip: "Planar map selected. Apply this for the \n \"big flat walls\". " 
-			button btn_UVPacker "UV-Packer" tooltip: "Apply UV-Packer modifier to UV2 with presets and PACK."  across:2
-			button btn_TransferUV "TransferUV" tooltip: "TransferUV"
-		)
+		groupBox grp3 "UVs" pos:[4,109] width:254 height:46
+		button btn_ApplyUV2 "UV2" pos:[8,128] width:48 height:21 toolTip:"Applies a chn 2 uv and collapse the stack" across:2
+		button btn_QPUV2 "QPlanar" pos:[58,128] width:54 height:21 toolTip:"Planar map selected. Apply this for the  'big flat walls'." 
+ 
+		button btn_UVPacker "UV-Packer" pos:[186,128] width:68 height:21 toolTip:"Apply UV-Packer modifier to UV2 with presets and PACK." across:2
+		button btn_TransferUV "TransferUV" pos:[114,128] width:70 height:21 toolTip:"TransferUV"
 		
-		group "Bake"(
-			button btn_bakeSelected "Bake Mains" tooltip:"Bake Selected Objects with presets to correct folders" across:3
-			dropDownList ddl_bakeSize "" width:50 items:#("128","256", "512", "1024", "2048") selection:5
-			checkbox chkbox_NR "Net Render" checked:false tooltip:"Enable Distributed Rendering."
-		)
+		groupBox grp4 "Bake" pos:[4,168] width:254 height:44
+		button btn_bakeSelected "Bake Mains" pos:[8,184] width:72 height:22 toolTip:"Bake Selected Objects with presets to correct folders" across:3
+		dropdownList ddl_bakeSize "" pos:[80,184] width:50 height:21 items:#("128", "256", "512", "1024", "2048") selection:5
+		checkbox chkbox_NR "Net Render" pos:[144,184] width:79 height:22 checked:false toolTip:"Enable Distributed Rendering."
 		
-
-		on btn_bakeSelected pressed do( RMT.BakeObject $ (ddl_bakeSize.selected as integer))
-		on chkbox_NR changed theState do ( RMT.mrRender.DistributedEnable = theState; format "Net Render %\n" theState )
-		on btn_setupFG pressed do ( RMT.SetupMR() )
-		on btn_SetupMats pressed do ( RMT.SetupMats() )
-		on btn_CleanMats pressed do ( RMT.CleanMats() )
-		on btn_MRSP pressed do ( RMT.createMRSkyPortal() )
-		on btn_MROM pressed do ( RMT.createMROmni() )
-		on btn_ApplyUV2 pressed do ( RMT.ApplyUV2() )	
-		on btn_QPUV2 pressed do( RMT.QuickPlanarUV2() )
-		on btn_UVPacker pressed do ( RMT.UVPack() )
-		on btn_TransferUV pressed do ( try(destroyDialog ro_TransferUV) catch(); createDialog ro_TransferUV)
-	) --end rollout
+		on btn_SetupMats pressed do
+			( RMT.SetupMats() )
+		on btn_CleanMats pressed do
+			( RMT.CleanMats() )
+		on btn_setupFG pressed do
+			( RMT.SetupFG() )
+		on btn_MRSP pressed do
+			( RMT.createMRSkyPortal() )
+		on btn_MROM pressed do
+			( RMT.createMROmni() )
+		on btn_ApplyUV2 pressed do
+			( RMT.ApplyUV2() )
+		on btn_QPUV2 pressed do
+			( RMT.QuickPlanarUV2() )
+		on btn_UVPacker pressed do
+			( RMT.UVPack() )
+		on btn_TransferUV pressed do
+			( try(destroyDialog ro_TransferUV) catch(); createDialog ro_TransferUV)
+		on btn_bakeSelected pressed do
+			( RMT.BakeObject $ (ddl_bakeSize.selected as integer))
+		on chkbox_NR changed theState do
+			( RMT.mrRender.DistributedEnable = theState; format "Net Render %\n" theState )
+	)
 	
 	
 	
@@ -2112,7 +2192,7 @@
 	)
 	--endrollout
 	
-	rollout ro_Rocketbirds "Rocketbirds" rolledup:true
+	rollout ro_Rocketbirds "Rocketbirds" rolledup:false
 	(
 		local imglogo = GetDir #userScripts + "\\RocketMaxTools\\rb.bmp"
 		button btn_logo "" tooltip:"Open Working Folder"align:#center width:256 height:128 images:#(imglogo,undefined,1,1,1,1,1) enabled:true
@@ -2124,16 +2204,12 @@
 
 	) ----------------------------------------------------------- End of MAIN ROLLOUTS BlOCK ---------------------------------------------
 	
-	--instace of struct
-	RMT = _RMT_()  
-	RMT.ExitUI()
-	RMT.CreateUI()
-	RMT.InitVariables()
-
-
-
+	--instance of struct
+	RMT = _RMT_()
+	RMT.ExitUI();
+	RMT.CreateUI();
+	RMT.InitVariables();
 	
--- 	if MainFloater !=undefined then closeRolloutFloater MainFloater
 	
 ) -- End of tool scope
 
