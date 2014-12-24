@@ -129,7 +129,7 @@
 		fn makeDirName dirName =
 		(
 			if (not (doesfileExist dirName) ) then ( MAKEDir dirName)
-			else ( format "% dirName exists! \n" dirName )
+			else ( format "\n % dirName exists!" dirName )
 		),
 		
 		fn OneObject = 
@@ -1245,7 +1245,7 @@
 	fn assignDoorMatID =
 	(
 
-		for obj in objects do
+		for obj in objects where canConvertTo obj Editable_Poly do
 		(
 			case obj.name of
 			(
@@ -1292,7 +1292,7 @@
 	
 	fn assignObjGenericMatID sel id =
 	(
-		for obj in sel do
+		for obj in sel where classOf obj == Editable_Poly do
 		(
 			polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} id   
 		)
@@ -1477,83 +1477,111 @@
 	fn SemiAutoSetup =
 	(
 		local importedFile, tokens, fileTitle
-		
+	
 		importedFile = getOpenFileName "Import RocketEd dae" filename:"C:\\Projects\\Cow2\\Assets\\Screens\\" types: "OpenCollada(*.dae)|*.dae|"
-		
+
 		if importedFile != undefined then
 		(
+					
 			tokens = filterString importedFile "\\"
 			fileTitle = substring tokens[6] 1 (tokens[6].count-4) -- start from int 1 to tokenlength-4
-
-			suspendEditing which:#modify
-	
--- 			if (not (doesFileExist (RMT.working_path + fileTitle))) do
--- 			(
--- 				makeDir  (RMT.working_path + fileTitle)
--- 			)
 			
 			RMT.makeDirName(RMT.working_path + fileTitle)
-			
+
 			local filename = RMT.working_path + fileTitle + "\\"+ fileTitle + ".max"
 			
-			if existFile filename then
+			if (existFile filename) then
 			(
-				if querybox (filename +" exists. Overwrite?") then
+				if queryBox ( filename + " exists. \nOverwrite file?") then 
 				(
-					savemaxFile (RMT.working_path + fileTitle + "\\"+ fileTitle + ".max")
-				) else
-				(
-					messageBox "Did nt save"
-					return;
-				)
-			)
-			
--- 			savemaxFile (RMT.working_path + fileTitle + "\\"+ fileTitle + ".max")
+				savemaxFile (RMT.working_path + fileTitle + "\\"+ fileTitle + ".max")
 				
-			importFile importedFile #noPrompt using:DAEIMP
+				suspendEditing which:#modify
+				importFile importedFile #noPrompt using:DAEIMP
+				format " ** Imported File: % **\n" fileTitle
 
-			format " ** Imported File: % **\n" fileTitle
+				select $*
+				RMT.ResetXFPoly()
+				RMT.AutoDoors()
+				RMT.assignDoorMatID()
+				RMT.assignOthersMatID()
+				RMT.SetupMats()
+				RMT.SetupFG()
+				$*.material = meditmaterials[1]
+				RMT.createBouncer()
+				RMT.sendtoLayer $Bouncer "Bouncer"
+				clearSelection()
 
-			--importerPlugin.classes
-			--exporterPlugin.classes
-
-			select $*
-			RMT.ResetXFPoly()
-			RMT.AutoDoors()
-			RMT.assignDoorMatID()
-			RMT.assignOthersMatID()
-			RMT.SetupMats()
-			RMT.SetupFG()
-			$*.material = meditmaterials[1]
-			RMT.createBouncer()
-			RMT.sendtoLayer $Bouncer "Bouncer"
-			clearSelection()
-
-			--save file, 
-			--set up materials
-			
-			for o in objects do
-			(
-				if matchpattern o.name pattern: "*Silhouette*" then
+				
+				for o in objects do
 				(
-					--o.material = sceneMaterials["Silhouette"]
-					o.material = meditmaterials[9]
-					RMT.sendtoLayerByName o.name "Silhouette"
-					format "found: %" o.name
+					if matchpattern o.name pattern: "*Silhouette*" then
+					(
+						--o.material = sceneMaterials["Silhouette"]
+						o.material = meditmaterials[9]
+						RMT.sendtoLayerByName o.name "Silhouette"
+						format "found: %" o.name
+					)
+					
+				)
+
+				for o in objects where (classof o.baseobject == Editable_Poly) do
+				(
+	-- 				ChannelInfo.CopyChannel o 3 1
+	-- 				ChannelInfo.PasteChannel o 3 2	
+					RMT.TransferUV o o 1 2
+					collapseStack o
 				)
 				
+				resumeEditing which:#modify
+				)
+				else()
 			)
-
-			for o in objects where (classof o.baseobject == Editable_Poly) do
+			else 
 			(
--- 				ChannelInfo.CopyChannel o 3 1
--- 				ChannelInfo.PasteChannel o 3 2	
-				RMT.TransferUV o o 1 2
-				collapseStack o
+				savemaxFile (RMT.working_path + fileTitle + "\\"+ fileTitle + ".max")
+				
+				suspendEditing which:#modify
+				importFile importedFile #noPrompt using:DAEIMP
+				format " ** Imported File: % **\n" fileTitle
+
+				select $*
+				RMT.ResetXFPoly()
+				RMT.AutoDoors()
+				RMT.assignDoorMatID()
+				RMT.assignOthersMatID()
+				RMT.SetupMats()
+				RMT.SetupFG()
+				$*.material = meditmaterials[1]
+				RMT.createBouncer()
+				RMT.sendtoLayer $Bouncer "Bouncer"
+				clearSelection()
+
+				
+				for o in objects do
+				(
+					if matchpattern o.name pattern: "*Silhouette*" then
+					(
+						--o.material = sceneMaterials["Silhouette"]
+						o.material = meditmaterials[9]
+						RMT.sendtoLayerByName o.name "Silhouette"
+						format "found: %" o.name
+					)
+					
+				)
+
+				for o in objects where (classof o.baseobject == Editable_Poly) do
+				(
+	-- 				ChannelInfo.CopyChannel o 3 1
+	-- 				ChannelInfo.PasteChannel o 3 2	
+					RMT.TransferUV o o 1 2
+					collapseStack o
+				)
+				
+				resumeEditing which:#modify
 			)
 			
-			resumeEditing which:#modify
-		)
+		) --end 1st if
 	),
 	
 	fn BuildRun =
@@ -2213,3 +2241,8 @@
 	
 ) -- End of tool scope
 
+macroScript RocketMaxTools category:"RocketBirds"
+tooltip:"RocketMaxTools" --Icon:#("RocketMaxTools",1)
+(
+	::fileIn(GetDir #userScripts + "\\RocketMaxTools\RMT.ms")
+)
