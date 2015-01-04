@@ -158,14 +158,14 @@
 		(
 			--reinit png paths
 			RMT.InitTextures()
-		
+			
   			try(
 			---------------------- FX materials --------------------------
 			macros.run "Medit Tools" "clear_medit_slots"
 			
 			if sceneMaterials["Main_2UV"] == undefined  then
 			(
-				main2uv = DxMaterial ()
+				local main2uv = DxMaterial ()
 				main2uv.name = "Main_2UV"  --eg, Simple_2UV
 				 
 				main2uv.effectfile = RMT.shader_path + "simple-2uv.fx"
@@ -188,7 +188,7 @@
 			
 			if sceneMaterials["Simple"] == undefined then
 			(
-				simple = DxMaterial ()
+				local simple = DxMaterial ()
 				simple.name = "Simple"  --eg, Simple_2UV
 				 
 				simple.effectfile = RMT.shader_path + "simple.fx"
@@ -204,7 +204,7 @@
 			
 	 		if sceneMaterials["SimpleCastShadow_2UV"] == undefined then
 			(
-				SimpleCastShadow2uv = DxMaterial ()
+				local SimpleCastShadow2uv = DxMaterial ()
 				SimpleCastShadow2uv.name = "SimpleCastShadow_2UV"  --eg, Simple_2UV
 				SimpleCastShadow2uv.effectfile = RMT.shader_path + "simple-2uv-castshadow.fx"
 				SimpleCastShadow2uv.technique = 0
@@ -225,7 +225,7 @@
 			
 			if sceneMaterials["Silhouette"] == undefined then
 			(
-				Silhouette = DxMaterial ()
+				local Silhouette = DxMaterial ()
 				Silhouette.name = "Silhouette"  --eg, Simple_2UV
 				Silhouette.effectfile = RMT.shader_path + "silhouette.fx"
 				Silhouette.technique = 0
@@ -239,7 +239,7 @@
 				
 			if sceneMaterials["Black"] == undefined then
 			(
-				blackfx = DxMaterial ()
+				local blackfx = DxMaterial ()
 				blackfx.name = "Black"  --eg, Simple_2UV
 				blackfx.effectfile = RMT.shader_path + "black.fx"
 				blackfx.technique = 0
@@ -251,7 +251,7 @@
 				
 			if sceneMaterials["Alpha"] == undefined then
 			(
-				alphafx = DxMaterial ()
+				local alphafx = DxMaterial ()
 				alphafx.name = "Alpha"  --eg, Simple_2UV
 				alphafx.effectfile = RMT.shader_path + "simple-alpha.fx"
 				alphafx.technique = 0
@@ -267,7 +267,7 @@
 
 		 	if sceneMaterials["Alpha_2UV"] == undefined then
 			(
-				alpha2uv = DxMaterial ()
+				local alpha2uv = DxMaterial ()
 				alpha2uv.name = "Alpha_2UV"  --eg, Simple_2UV
 				alpha2uv.effectfile = RMT.shader_path + "simple-alpha-2uv.fx"
 				alpha2uv.technique = 0
@@ -289,7 +289,7 @@
 				
 		 	if sceneMaterials["Multiply"] == undefined then
 			(
-				multiplyfx = DxMaterial ()
+				local multiplyfx = DxMaterial ()
 				multiplyfx.name = "Multiply"  --eg, Simple_2UV
 				multiplyfx.effectfile =  RMT.shader_path + "simple-multiply.fx"
 				multiplyfx.technique = 0
@@ -305,7 +305,7 @@
 			
 			if sceneMaterials["BreakableAlpha"] == undefined then
 			(
-				breakablealpha = DxMaterial ()
+				local breakablealpha = DxMaterial ()
 				breakablealpha.name = "BreakableAlpha"  --eg, Simple_2UV
 				breakablealpha.effectfile = (RMT.shader_path + "simple-multiply.fx")
 				breakablealpha.technique = 0
@@ -320,7 +320,7 @@
 			
 			if sceneMaterials["Chicken"] == undefined then
 			(
-				chickenfx = DxMaterial ()
+				local chickenfx = DxMaterial ()
 				chickenfx.name = "Chicken"
 				chickenfx.effectfile = RMT.shader_path + "character-background.fx"
 				chickenfx.technique = 0
@@ -336,7 +336,7 @@
 			
 			if sceneMaterials["Stars"] == undefined  then
 			(
-				starsfx = DxMaterial ()
+				local starsfx = DxMaterial ()
 				starsfx.name = "Stars"  --eg, Simple_2UV
 				starsfx.effectfile = RMT.shader_path + "simple-alpha.fx"
 				starsfx.technique = 0
@@ -353,19 +353,19 @@
 			
 			if sceneMaterials["Terminator"] == undefined then
 			(
-			terminatorfx = DxMaterial () 
-			terminatorfx.name = "Terminator"  --eg, Simple_2UV
-			terminatorfx.effectfile = RMT.shader_path + "simple-alpha.fx"
-			terminatorfx.technique = 0
-			terminatorfx.renderMaterial = StandardMaterial name:"simple-alpha_renderstyle"
-			terminatorfx.Blend = 1
-			terminatorfx.Show_Transparency = 1		
+				local terminatorfx = DxMaterial () 
+				terminatorfx.name = "Terminator"  --eg, Simple_2UV
+				terminatorfx.effectfile = RMT.shader_path + "simple-alpha.fx"
+				terminatorfx.technique = 0
+				terminatorfx.renderMaterial = StandardMaterial name:"simple-alpha_renderstyle"
+				terminatorfx.Blend = 1
+				terminatorfx.Show_Transparency = 1		
 				
-			if (RMT.existFile (RMT.alphaTex)) do (terminatorfx.TexDiffuse = openBitMap (RMT.alphaTex) ) 
-				
-			meditMaterials[18] = terminatorfx
-			)
-			 else ( meditMaterials[18] = sceneMaterials["Terminator"]  )
+				if (RMT.existFile (RMT.alphaTex)) do (terminatorfx.TexDiffuse = openBitMap (RMT.alphaTex) ) 
+					
+				meditMaterials[18] = terminatorfx
+				)
+				 else ( meditMaterials[18] = sceneMaterials["Terminator"]  )
 			
 		) --end try
   		catch( messagebox "Script Error: Please restart max or contact Walter. ;)")
@@ -1595,7 +1595,7 @@
 		
 		RMT.InitCallbacks()
 		
-		rf_MainFloater = newRolloutFloater "RocketMaxTools" 260 780
+		rf_MainFloater = newRolloutFloater "RocketMaxTools" 268 780
 		rf_MainFloater.pos.x = (getINISetting RMT.settingsfile "General" "Window Pos X") as integer
 		rf_MainFloater.pos.y = (getINISetting RMT.settingsfile "General" "Window Pos Y") as integer
 
@@ -1642,28 +1642,28 @@
 ----------------------------------------------------------- Start of MAIN ROLLOUTS BlOCK ---------------------------------------------
 	( -- MAIN ROLLOUTS
 	
-		rollout ro_Menu01 "Layering Tools" width:256 height:144
+		rollout ro_Menu01 "Layering Tools" width:260 height:184
 		(
 			local importList = #( "Chicken", "FX", "Grates", "Lines", "Abattoir Lines")
 			
-			button btn_lightLayers "Lights" pos:[8,8] width:50 height:21
-			button btn_Black "Black" pos:[60,8] width:50 height:21 toolTip:"Black"
-			button btn_fullBright "FB" pos:[108,8] width:50 height:21 toolTip:"Full Bright"
-			button btn_silhouette "1ClickSemi" pos:[159,7] width:81 height:21
+			button btn_lightLayers "Lights" pos:[4,48] width:50 height:21
+			button btn_Black "Black" pos:[56,48] width:50 height:21 toolTip:"Black"
+			button btn_fullBright "FB" pos:[108,48] width:50 height:21 toolTip:"Full Bright"
+			button btn_importMain "-- IMPORT Level --" pos:[4,8] width:240 height:32
 				
-			button btn_blocker "Blocker" pos:[8,32] width:50 height:21
-			button btn_fx "FX" pos:[60,32] width:50 height:21
-			button btn_main "Main" pos:[112,32] width:50 height:21
-			button btn_ladder "Ladders" pos:[164,32] width:50 height:21
+			button btn_blocker "Blocker" pos:[4,72] width:50 height:21
+			button btn_fx "FX" pos:[56,72] width:50 height:21
+			button btn_main "Main" pos:[108,72] width:50 height:21
+			button btn_ladder "Ladders" pos:[160,72] width:50 height:21
 			
-			groupBox grp1 "" pos:[4,56] width:252 height:42
-			button btn_bouncer "Bouncer" pos:[8,70] width:50 height:21
-			colorPicker theColor "" pos:[58,70] width:44 height:20 color:[50,50,50]
-			dropdownList ddl_import "" pos:[108,70] width:80 height:21 items:#("Chicken", "FX", "Grates", "Lines", "Abattoir Lines") across:2
-			button btn_import "Import" pos:[190,70] width:45 height:21
+			GroupBox grp1 "" pos:[4,96] width:240 height:42
+			button btn_bouncer "Bouncer" pos:[8,110] width:50 height:20
+			colorPicker theColor "" pos:[62,110] width:44 height:20 color:[50,50,50]
+			dropdownList ddl_import "" pos:[112,110] width:80 height:21 items:#("Chicken", "FX", "Grates", "Lines", "Abattoir Lines") across:2
+			button btn_import "Import" pos:[194,110] width:45 height:20
 			
-			button btn_delEmptyLayers "Del Empty Layers" pos:[8,104] width:100 height:24 across:2
-			button btn_delemptyobjects "Del Empty Objects" pos:[112,104] width:103 height:24 items:#("Chicken", "FX", "Grates", "Lines", "Abattoir Lines")
+			button btn_delEmptyLayers "Del Empty Layers" pos:[4,144] width:100 height:24 across:2
+			button btn_delemptyobjects "Del Empty Objects" pos:[116,144] width:103 height:24 items:#("Chicken", "FX", "Grates", "Lines", "Abattoir Lines")
 
 			on btn_lightLayers pressed do
 				(RMT.sendtoLayer (select lights)  "Lights")
@@ -1671,7 +1671,7 @@
 				(RMT.sendtoLayer selection "Black")
 			on btn_fullBright pressed do
 				(RMT.sendtoLayer selection "FullBright")
-			on btn_silhouette pressed do
+			on btn_importMain pressed do
 				( RMT.SemiAutoSetup() )
 			on btn_blocker pressed do
 				(RMT.sendtoLayer selection "Blocker")
@@ -2093,17 +2093,23 @@
 	rollout ro_Menu02 "Geometry Tools" width:260 height:190
 	(
 		--button btn_mirrorflip "Mirror and Flip Normals" width: buttonWidth
-		button btn_xform "Reset XForms" pos:[8,8] width:100 height:21 toolTip:"Convert to Editable Poly and Resets XForm" across:2
+		button btn_xform "Reset XForms" pos:[4,8] width:100 height:21 toolTip:"Convert to Editable Poly and Resets XForm" across:2
 		button btn_weldVertices "Weld Vertices" pos:[108,8] width:100 height:21 toolTip:"Weld ALL vertices of selected objects at 0.001"
-		button btn_centerPivot "Center Pivot" pos:[8,30] width:100 height:21 toolTip:"Set pivot to center, selected vertex or edge" across:2
+		button btn_centerPivot "Center Pivot" pos:[4,30] width:100 height:21 toolTip:"Set pivot to center, selected vertex or edge" across:2
 		button btn_oneobject "One Object" pos:[108,30] width:100 height:21 toolTip:"Attach all objects in selection" 
  
  
-		button btn_normalfix "FIX" pos:[208,8] width:38 height:43
+ 
+ 
+ 
+		button btn_normalfix "FIX" pos:[208,8] width:44 height:43
 		
 		
-		GroupBox grp1 "Door Helper" pos:[2,56] width:256 height:73
+		GroupBox grp1 "Door Helper" pos:[4,56] width:250 height:73
 		button btn_selectsimilar "Select Similar" pos:[8,80] width:80 height:21 toolTip:"Select Similar elements" 
+ 
+ 
+ 
  
  
 		button btn_detachFaces "Quick Detach" pos:[88,80] width:80 height:21 toolTip:"Detach selected faces as object"
@@ -2111,12 +2117,15 @@
 		button btn_doorHelper "Door Helper" pos:[88,102] width:80 height:21 toolTip:"Launch door helper tool"
 		button btn_doorHelper2 "DoorHelperV2" pos:[168,80] width:80 height:43 
  
+ 
+ 
+ 
 		
 		
-		GroupBox grp2 "Anim Helper" pos:[2,134] width:256 height:43
+		GroupBox grp2 "Anim Helper" pos:[4,134] width:250 height:43
 		button btn_animHelper "Animation Helper" pos:[8,152] width:96 height:21
 		button btn_setvertwhite "SetVertWhite" pos:[106,152] width:72 height:21
-		button btn_setvertblack "SetVertBlack" pos:[178,152] width:72 height:21
+		button btn_setvertblack "SetVertBlack" pos:[180,152] width:72 height:21
 		
 		on btn_xform pressed do
 			( RMT.ResetXFPoly() )
@@ -2140,8 +2149,10 @@
 			( try(destroyDialog ro_doorHelper2)catch(); createDialog ro_doorHelper2)
 		on btn_animHelper pressed do
 			( try(destroyDialog ro_animHelper) catch(); createDialog ro_animHelper width:232 height:488)
-		on btn_setvertwhite pressed do (RMT.SetVertColorWhite();)
-		on btn_setvertblack pressed do (RMT.SetVertColorBlack();)
+		on btn_setvertwhite pressed do
+			(RMT.SetVertColorWhite();)
+		on btn_setvertblack pressed do
+			(RMT.SetVertColorBlack();)
 	)
 	
 	rollout ro_Menu03 "Bake Tools" width:260 height:224
