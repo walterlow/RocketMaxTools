@@ -154,6 +154,11 @@
 		
 		fn existFile strFileName = ( (getfiles strFileName).count != 0 ), 
 		
+		fn setEffectFile mtlslot fxname =
+		(
+			meditMaterials[mtlslot].effectfile =  RMT.shader_path + fxname
+		),
+		
 		fn SetupMats =
 		(
 			--reinit png paths
@@ -167,7 +172,6 @@
 			(
 				local main2uv = DxMaterial ()
 				main2uv.name = "Main_2UV"  --eg, Simple_2UV
-				 
 				main2uv.effectfile = RMT.shader_path + "simple-2uv.fx"
 				main2uv.technique = 0
 				main2uv.renderMaterial = StandardMaterial name:"simple-2uv_renderstyle"
@@ -1156,13 +1160,14 @@
 		)
 	), --end fn selectsimilar
 	
-	fn EditNormalFix =
+	fn EditNormalFix type =
 	(
 		local smoothMod, obj
 		
 		smoothMod = Smooth()
 		--smoothMod.autosmooth = on
-		smoothMod.smoothingBits = 1
+		if (type == 1) then (smoothMod.smoothingBits = 1) else (smoothMod.smoothingBits = 0)
+
 		smoothMod.threshold = 180
 		obj = getCurrentSelection()
 		
@@ -2095,32 +2100,18 @@
 		--button btn_mirrorflip "Mirror and Flip Normals" width: buttonWidth
 		button btn_xform "Reset XForms" pos:[4,8] width:100 height:21 toolTip:"Convert to Editable Poly and Resets XForm" across:2
 		button btn_weldVertices "Weld Vertices" pos:[108,8] width:100 height:21 toolTip:"Weld ALL vertices of selected objects at 0.001"
-		button btn_centerPivot "Center Pivot" pos:[4,30] width:100 height:21 toolTip:"Set pivot to center, selected vertex or edge" across:2
+		button btn_centerPivot "Center Pivot" pos:[4,30] width:100 height:21 toolTip:"LMB: Set pivot to center, selected vertex or edge.\nCTRL+LMB: Set pivot to [0,0,0]" across:2
 		button btn_oneobject "One Object" pos:[108,30] width:100 height:21 toolTip:"Attach all objects in selection" 
- 
- 
- 
- 
- 
-		button btn_normalfix "FIX" pos:[208,8] width:44 height:43
-		
-		
+		button btn_normalfix "FIX" pos:[208,8] width:44 height:43 tooltip:"LMB: Set 1 Smoothing Group.\nCTRL+LMB: Set 0 Smoothing Group."	
 		GroupBox grp1 "Door Helper" pos:[4,56] width:250 height:73
 		button btn_selectsimilar "Select Similar" pos:[8,80] width:80 height:21 toolTip:"Select Similar elements" 
  
- 
- 
- 
- 
+
 		button btn_detachFaces "Quick Detach" pos:[88,80] width:80 height:21 toolTip:"Detach selected faces as object"
 		button btn_autoDoors "Auto Doors" pos:[8,102] width:80 height:21
 		button btn_doorHelper "Door Helper" pos:[88,102] width:80 height:21 toolTip:"Launch door helper tool"
 		button btn_doorHelper2 "DoorHelperV2" pos:[168,80] width:80 height:43 
- 
- 
- 
- 
-		
+ 	
 		
 		GroupBox grp2 "Anim Helper" pos:[4,134] width:250 height:43
 		button btn_animHelper "Animation Helper" pos:[8,152] width:96 height:21
@@ -2136,7 +2127,7 @@
 		on btn_oneobject pressed do
 			( RMT.OneObject() )
 		on btn_normalfix pressed do
-			( RMT.EditNormalFix() )
+			( RMT.EditNormalFix 1; if keyboard.controlPressed do RMT.EditNormalFix 0 )
 		on btn_selectsimilar pressed do
 			( RMT.selectsimilar() )
 		on btn_detachFaces pressed do
