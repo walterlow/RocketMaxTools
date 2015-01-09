@@ -102,7 +102,7 @@
 			callbacks.addScript #filePostOpen "RMT.callback_SceneChanged()" id:#RMT_callback_RefreshUI
 		
 			--todo: consider removing
-			callbacks.addScript #filePostSave "RMT.callback_SceneChanged()" id:#RMT_callback_RefreshUI
+			--callbacks.addScript #filePostSave "RMT.callback_SceneChanged()" id:#RMT_callback_RefreshUI
 		),
 		
 		fn DestroyCallbacks=
@@ -553,6 +553,102 @@
 		)
 		else( MessageBox("Select Something!") )
 	),
+	
+	fn GetMods obj ModType =
+	(
+		return (for m in obj.modifiers where classof m == ModType collect m)
+	),
+		
+	fn GetProj obj =
+	(
+		Projs = RMT.GetMods obj Projection
+		if Projs.count == 0 then return undefined
+		return Projs[1]
+	),
+	
+	fn BakeProps obj texsize =
+	(
+			local render_path, bp, lm, ilm, ao
+			
+			if (classof $.baseobject == Editable_Poly and selection.count == 1 ) then
+			(
+				
+				try (destroyDialog gTextureBakeDialog)catch()
+
+		
+				render_path = RMT.working_path + getFileNameFile maxFileName + "\\" + "baked\\"
+
+				RMT.makeDirName(render_path)
+
+				bp = obj.INodeBakeProperties
+				bp.removeAllBakeElements()
+				bp.bakeEnabled = true
+				bp.bakeChannel = 1
+				bp.nDilations = 2
+				
+				proj = RMT.GetProj obj
+				bpp = obj.INodeBakeProjProperties
+				bpp.enabled = true
+				bpp.UseCage = true
+				bpp.projectionMod = proj
+				bpp.hitMatchMtlID = false
+				
+				--Diffuse
+				df = DiffuseMap()
+				df.outputSzX = df.outputSzY = texsize
+				df.fileType = render_path + obj.name + "_DiffuseMask" + ".png"
+				df.fileName = render_path + obj.name + "_DiffuseMask" + ".png"
+				
+				--Normals
+				nm = NormalsMap()
+				nm.outputSzX = nm.outputSzY = texsize
+				nm.fileType = render_path + obj.name + "_Normals" + ".png"
+				nm.fileName = render_path + obj.name + "_Normals" + ".png"
+		
+				--AOmap
+				ao = Ambient_Occlusion()
+				ao.outputSzX = ao.outputSzY = texsize
+				ao.fileType = render_path + obj.name + "_AO" + ".png"
+				ao.fileName = render_path + obj.name + "_AO" + ".png"
+				
+				ao.samples = 16
+				ao.spread = 1.5
+				ao.maxDistance = 0.3
+				ao.falloff = 1
+				
+				----------------------
+				-- AO PASS -- (Mental ray)
+				bp.removeAllBakeElements()
+				bp.addBakeElement ao
+			
+				mr = renderers.current = mental_ray_renderer()
+				mr.FinalGatherEnable2 = false
+				mr.MinimumSamples = 0
+				mr.MaximumSamples = 2
+				
+				render renderType:#bakeSelected frame:#current vfb:true progressBar:true outputwidth:texsize outputheight:texsize
+				------------------------
+								
+				------------------------
+				-- DIFFUSE AND NORMAL PASS -- (Scanline)
+				bp.removeAllBakeElements()		
+				bp.addBakeElement df
+				bp.addBakeElement nm
+				
+				sl = renderers.current = Default_Scanline_Renderer()
+				sl.antiAliasFilter = Catmull_Rom()
+				sl.globalSamplerEnabled = true
+				sl.globalSamplerSampleMaps = true
+				sl.globalSamplerClassByName = "Hammersley"
+				sl.globalSamplerQuality = 1.0
+				
+				render renderType:#bakeSelected frame:#current vfb:true progressBar:true outputwidth:texsize outputheight:texsize
+				---------------------------
+			
+		)
+		else( MessageBox("Select Something!") )
+	),
+	--RMT.BakeProps $ 512
 	
 	fn saveCurrentFinal =
 	(
@@ -2151,7 +2247,7 @@
 		groupBox grp1 "Materials" pos:[4,7] width:254 height:46
 		button btn_SetupMats "SetupMats" pos:[8,24] width:67 height:21 toolTip:"Create common Max materials and fx materials" across:3
 		button btn_CleanMats "CleanMats" pos:[80,24] width:66 height:21 toolTip:"Select nothing to clean all, otherwise clean selected objects"
--- 		button btn_setupFG "SetupFG" pos:[152,24] width:58 height:21 toolTip:"Load preset FG settings"
+		button btn_setupFG "SetupFG" pos:[152,24] width:58 height:21 toolTip:"Load preset FG settings"
 
 		groupBox grp2 "Lights" pos:[4,58] width:254 height:46
 		button btn_MRSP "MRSkyPortal" pos:[8,77] width:78 height:21 across:2
