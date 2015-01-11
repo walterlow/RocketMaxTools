@@ -1,33 +1,89 @@
+macroScript BakeTool category:"RocketBirds"
+tooltip:"Bake Props Tool"
 (
--- 	macroScript RendererSwitcher category:"RocketBirds"
--- 	tooltip:"RendererSwitcher"
--- 	(
--- 		::fileIn(GetDir #userScripts + "\RendererSwitcher.ms")
--- 	)
+	::fileIn(GetDir #userScripts + "\RocketMaxTools" + "\BakeTool.ms")
+)
+
+(
+	
 	
 	global ro_BakeTool
 	try (destroyDialog ro_BakeTool)catch()
 
-	rollout ro_BakeTool "Bake Props Tool 0.1" width:232 height:232
+	rollout ro_BakeTool "RocketBakeTool 0.1" width:232 height:292
 	(
+		
+		local fullpath
+		local render_path
+		local inipath = getdir #userscripts + "\\RocketMaxTools\\"
+		local iniFile = inipath + "BakeTools.ini"
+		
+		
+		local LP = #()
+		
+		checkbutton ckb_Diffuse "Diffuse" pos:[8,143] width:78 height:28	
+		checkbutton ckb_Normal "Normal" pos:[88,143] width:78 height:28
+		checkbutton ckb_AO "AO" pos:[168,143] width:56 height:28
+		
+		button btn_Bake "Bake It!" pos:[84,191] width:60 height:40
+		button btn_OpenOutput "Open Output" pos:[148,191] width:80 height:40
+		
+		dropdownList ddl_textureSizes "Texture Size:" pos:[8,183] width:64 height:40 items:#("128", "256", "512", "1024", "2048")
+		edittext edt_Output "" pos:[4,103] width:176 height:24
+		label lbl_Output "Output Folder: " pos:[8,87] width:136 height:16
+		button btn_setFolder "Set" pos:[188,103] width:40 height:24
+		
+		checkbox chk_showvfb "Show VFB" pos:[8,243] width:88 height:22
+		checkbox chk_autoclosevfb "Auto close VFB" pos:[100,243] width:92 height:22
+		
+		label lbl1 "OPTIONAL: " pos:[12,4] width:60 height:16
+		button btn_SetLowPoly "Mark/Select LP" pos:[4,23] width:76 height:24 tooltip: "Marking a LP is OPTIONAL \nbut can be useful if you wanna continue working on your HP.\n\nYou can bake the LP without selecting it afterwards."
+		label lbl_LowPoly " LP:  " pos:[84,23] width:144 height:52 style_sunkenedge:true
+		button btn_Clear "Clear" pos:[4,51] width:76 height:24
+		
+ 		--label lbl_author "Author: walterlow88@gmail.com --" pos:[8,272] width:162 height:32
 
-		local fullpath = ( getFileNamePath (maxFilePath+maxFileName) + getFilenamefile(maxFilePath+maxFileName) )
-		local render_path =  fullpath + "\\" + "baked\\"
-		local textureSizes = #("128", "256", "512", "1024", "2048")
+		fn InitCallbacks =
+		(
+			-- refresh UI if scene changed (load, reset, new, nodes renamed, deleted)
+			callbacks.addScript #systemPostNew "ro_BakeTool.callback_SceneChanged()" id:#callback_RefreshUI
+			callbacks.addScript #systemPostReset "ro_BakeTool.callback_SceneChanged()" id:#callback_RefreshUI
+			callbacks.addScript #filePostOpen "ro_BakeTool.callback_SceneChanged()" id:#callback_RefreshUI
+
+		)
 		
+		fn DestroyCallbacks=
+		(
+			callbacks.removeScripts id:#callback_RefreshUI
+		)
 		
-		checkButton ckb_Diffuse "Diffuse" pos:[8,64] width:78 height:28	
-		checkButton ckb_Normal "Normal" pos:[88,64] width:78 height:28
-		checkButton ckb_AO "AO" pos:[168,64] width:48 height:28
+		fn callback_SceneChanged =
+		(
+			ro_BakeTool.DestroyCallbacks()
+			ro_BakeTool.InitCallbacks()
+			
+			ro_BakeTool.edt_Output.text = ro_BakeTool.GetRenderPath()
+			ro_BakeTool.LP = #()
+			ro_BakeTool.lbl_lowPoly.caption = "LP: "
+		)
 		
-		button btn_Bake "Bake It!" pos:[88,112] width:56 height:40
-		button btn_OpenOutput "Open Output" pos:[152,112] width:80 height:40
-		
-		dropDownList ddl_textureSizes "Texture Size:" pos:[8,104] width:80 height:40 items: textureSizes selection: 3
-		editText edt_Output "" pos:[8,24] width:168 height:24
-		label lbl_Output "Set Output Folder: " pos:[8,8] width:136 height:16
-		button btn_setFolder "Set" pos:[184,24] width:40 height:24
-		
+		fn GetRenderPath =
+		(
+			local fullpath
+			local render_path
+			
+			if (  getFileNamePath (maxFilePath+maxFileName) == "" ) then
+			(
+				fullpath = "C:\\Projects\\Cow2\\Assets\\Screens\\working\\"
+			)
+			else
+			(
+				fullpath = getFileNamePath (maxFilePath+maxFileName)
+			)
+				
+			render_path =  fullpath + "baked\\"
+			return render_path
+		)
 		
 		fn GetMods obj ModType =
 		(
@@ -40,15 +96,24 @@
 			if Projs.count == 0 then return undefined
 			return Projs[1]
 		)
+		
+		fn filter_LP obj =
+		(
+			superclassof obj == GeometryClass
+		)
 
 		fn BakeProps obj texsize =
 		(
-				local bp, bpp, df, ao, nm, mr
-				
-				if (classof obj.baseobject == Editable_Poly and selection.count == 1 ) then
+			local bp, bpp, df, ao, nm, mr, vfb
+			
+			-- re-set path if user changes output dir
+			render_path = edt_Output.text
+			
+			if (selection.count == 1 OR LP.count == 1) then
+			(
+				if (classof obj.baseobject == Editable_Poly or classof $.baseobject == Editable_Poly or classof LP[1].baseobject == Editable_Poly) then
 				(
-	
-					if (not (doesfileExist render_path) ) then ( MAKEDir render_path) else ( format "\n % dirName exists!" render_path )
+					if (not (doesfileExist render_path) ) then ( MAKEDir render_path)
 
 					bp = obj.INodeBakeProperties
 					bp.removeAllBakeElements()
@@ -57,6 +122,9 @@
 					bp.nDilations = 2
 					
 					proj = GetProj obj
+					
+					if proj != undefined then proj.setGeomSelNodesVisibility true
+					
 					bpp = obj.INodeBakeProjProperties
 					bpp.enabled = true
 					bpp.UseCage = true
@@ -96,9 +164,13 @@
 					mr.FinalGatherEnable2 = false
 					mr.MinimumSamples = 0
 					mr.MaximumSamples = 2
-
-					------------------------
-									
+					
+					if (bp.findByName "Ambient Occlusion (MR)" != 0 ) then
+					(
+						vfb = render renderType:#bakeSelected frame:#current vfb:chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize
+						if chk_autoclosevfb.state then close vfb			
+					)
+					
 					------------------------
 					-- DIFFUSE AND NORMAL PASS -- (Scanline)
 					bp.removeAllBakeElements()	
@@ -114,56 +186,166 @@
 					
 					if (bp.numBakeElements() != 0 ) then
 					(
-						render renderType:#bakeSelected frame:#current vfb:true progressBar:true outputwidth:texsize outputheight:texsize
-					) else
-					(
-						Messagebox ("Select maps to bake!")
-						return false
-					)
-					---------------------------
-			
+						vfb = render renderType:#bakeSelected frame:#current vfb:chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize
+						if chk_autoclosevfb.state then close vfb
+					) 
+	
+				)
 			)
 			else( MessageBox("Select Something!") )
-		)
-		
+		) --end fn
 
-		
-		
+
+		-----------------------------------------------------------------------------------------------------------------------------------------------------------
+		-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
 		on ro_BakeTool open do
 		(
-			edt_Output.text = render_path
-			ckb_Diffuse.checked = true
-			ckb_Normal.checked = true
-			ckb_AO.checked = true
+			InitCallBacks()
+			
+			--Init 
+			if not doesFileExist iniFile then 
+			(
+				--create ini file
+				setINISetting iniFile  "Elements" "Diffuse" "true" 
+				setINISetting iniFile 	"Elements" "Normals" "true" 
+				setINISetting iniFile  "Elements" "AO" "true" 
+				
+				setINISetting iniFile "Settings" "ShowVFB" "true"
+				setINISetting iniFile "Settings" "AutoCloseVFB" "true"
+				setINISetting iniFile "Settings" "TexSize" "3"
+						
+				setINISetting iniFile "Settings" "WinPosX" "0"
+				setINISetting iniFile "Settings" "WinPosY" "0"
+			)
+				
+		
+			edt_Output.text = GetRenderPath()
+				
+			ckb_Diffuse.checked = (getINISetting iniFile "Elements" "Diffuse") as BooleanClass
+			ckb_Normal.checked = (getINISetting iniFile "Elements" "Normals") as BooleanClass
+			ckb_AO.checked = (getINISetting iniFile "Elements" "AO") as BooleanClass
+			ddl_textureSizes.selection = (getINISetting iniFile "Settings" "TexSize") as integer
+			chk_showvfb.checked = (getINISetting iniFile "Settings" "ShowVFB") as BooleanClass
+			chk_autoclosevfb.checked = (getINISetting iniFile "Settings" "AutoCloseVFB") as BooleanClass
+			
+			SetDialogPos ro_BakeTool [ (getINISetting iniFile "Settings" "WinPosX") as float , (getINISetting iniFile "Settings" "WinPosY") as float]
+			
+		)
+		
+		on ro_BakeTool close do
+		(
+			
+			DestroyCallbacks()
+			
+			setINISetting iniFile  "Elements" "Diffuse" (ckb_Diffuse.checked as String)
+			setINISetting iniFile 	"Elements" "Normals" (ckb_Normal.checked as String)
+			setINISetting iniFile  "Elements" "AO" (ckb_AO.checked as String)
+			setINISetting iniFile "Settings" "TexSize" (ddl_textureSizes.selection as String)
+			setINISetting iniFile "Settings" "ShowVFB" (chk_showvfb.checked as String)
+			setINISetting iniFile "Settings" "AutoCloseVFB" (chk_autoclosevfb.checked as String)
+			
+			local pos = GetDialogPos ro_BakeTool
+			
+			setINISetting iniFile "Settings" "WinPosX" (pos[1] as String)
+			setINISetting iniFile "Settings" "WinPosY" (pos[2] as String)
+		
 		)
 		
 		on btn_Bake pressed do
 		(
-			BakeProps $ (ddl_textureSizes.selected as integer)
 			
-			--check ckb btns
-			/*
-			if chked.state 
-				add element
+			if LP.count == 1 then
+			(
+				clearSelection()
+				select LP[1]
+				unhide LP[1]
+				BakeProps LP[1] (ddl_textureSizes.selected as integer)
+			)
 			
-			if chked.state 
-				add element
+			if LP.count == 0 and selection.count == 0  then
+			(	
+				messageBox ("Error 1: Select something or check Projection Mod")
+			)
 			
-			if chked.state 
-				add element
+			if LP.count == 0 and selection.count == 1  then
+			(	
+				if GetProj selection[1] != undefined then
+				(
+					--messageBox ("Bake selection[activeSelection]")	
+					BakeProps selection[1] (ddl_textureSizes.selected as integer)
+				)
+				else ( messageBox ("Error 2: check Projection Mod") )
+			)
+						---=====================================================-----
 			
+			--todo: force override buggy.
+-- 			if LP.count == 1 and selection.count == 1 then
+-- 			(	
+-- 				if GetProj selection[1] != undefined then
+-- 				(
+-- 					messageBox ("Bake selection[activeSelection]: ")
+-- 					BakeProps selection[1] (ddl_textureSizes.selected as integer)
+-- 				)
+-- 				else
+-- 				(
+-- 					messageBox ("Error 3: Select something or check Projection Mod")
+-- 					
+-- 				)	
+-- 			)
 			
-			*/
+			--if LP is marked and nothing is selected, then we select the marked LP
+			if LP.count == 1 and selection.count == 0  then
+			(	
+				if GetProj LP[1] != undefined then
+				(
+					--messageBox ("Bake marker: ")
+					select LP[1]
+					unhide LP[1]
+					BakeProps LP[1] (ddl_textureSizes.selected as integer)
+				)
+				else ( messageBox ("Error 4: Select something or check Projection Mod"); select LP[1] )
+			)
+			
 		)
 		
 		on btn_OpenOutput pressed do
 		(
+			--print edt_Output.text
 			shellLaunch "explorer.exe" edt_Output.text
 		)
+		on edt_Output changed txt do
+		(
+			if txt != "" then ( edt_Output.text = txt )
+		)
+		on btn_setFolder pressed do
+		(
+			savepath = getSavePath caption:"Select folder to save textures" initialDir: "C:\\Projects\\Cow2\\Assets\\"
+			if savepath != undefined then edt_Output.text = savepath + "\\"
+		)
+		on btn_SetLowPoly pressed do
+		(
+			
+			if selection.count == 1 then
+			(
+				LP = #()
+				append LP selection[1]
+				lbl_lowPoly.caption = LP[1].name
+			)
+			
+			if LP.count !=0 then ( select(LP[1]) )
+		)
+		on btn_Clear pressed do
+		(
+			LP = #()
+			lbl_lowPoly.caption = "LP: "
+		)
 	)
-
-)
-
+	
 createDialog ro_BakeTool
+	
+) --end script block
+
+
 
 
