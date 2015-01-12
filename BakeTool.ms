@@ -10,7 +10,7 @@ tooltip:"Bake Props Tool"
 	global ro_BakeTool
 	try (destroyDialog ro_BakeTool)catch()
 
-	rollout ro_BakeTool "RocketBakeTool 0.1" width:232 height:292
+	rollout ro_BakeTool "RocketBakeTool 0.1" width:400 height:332
 	(
 		
 		local fullpath
@@ -22,24 +22,27 @@ tooltip:"Bake Props Tool"
 		local LP = #()
 		
 		checkbutton ckb_Diffuse "Diffuse" pos:[8,143] width:78 height:28	
+	
 		checkbutton ckb_Normal "Normal" pos:[88,143] width:78 height:28
 		checkbutton ckb_AO "AO" pos:[168,143] width:56 height:28
+		checkbutton ckb_UVW "UVW" pos:[8,176] width:78 height:28
 		
-		button btn_Bake "Bake It!" pos:[84,191] width:60 height:40
-		button btn_OpenOutput "Open Output" pos:[148,191] width:80 height:40
 		
-		dropdownList ddl_textureSizes "Texture Size:" pos:[8,183] width:64 height:40 items:#("128", "256", "512", "1024", "2048")
+		button btn_Bake "Bake It!" pos:[80,220] width:60 height:40
+		button btn_OpenOutput "Open Output" pos:[144,220] width:80 height:40
+		
+		dropdownList ddl_textureSizes "Texture Size:" pos:[4,212] width:64 height:40 items:#("128", "256", "512", "1024", "2048")
 		edittext edt_Output "" pos:[4,103] width:176 height:24
 		label lbl_Output "Output Folder: " pos:[8,87] width:136 height:16
 		button btn_setFolder "Set" pos:[188,103] width:40 height:24
 		
-		checkbox chk_showvfb "Show VFB" pos:[8,243] width:88 height:22
-		checkbox chk_autoclosevfb "Auto close VFB" pos:[100,243] width:92 height:22
+		checkbox chk_showvfb "Show VFB" pos:[4,272] width:88 height:22
+		checkbox chk_autoclosevfb "Auto close VFB" pos:[96,272] width:92 height:22
 		
 		label lbl1 "OPTIONAL: " pos:[12,4] width:60 height:16
-		button btn_SetLowPoly "Mark/Select LP" pos:[4,23] width:76 height:24 tooltip: "Marking a LP is OPTIONAL \nbut can be useful if you wanna continue working on your HP.\n\nYou can bake the LP without selecting it afterwards."
-		label lbl_LowPoly " LP:  " pos:[84,23] width:144 height:52 style_sunkenedge:true
-		button btn_Clear "Clear" pos:[4,51] width:76 height:24
+		button btn_SetLowPoly "Mark/Select LP" pos:[4,23] width:76 height:24 toolTip:"Marking a LP is OPTIONAL but can be useful if you wanna continue working on your HP \n\nYou can bake the LP without selecting it afterwards."
+		label lbl_LowPoly "   " pos:[84,23] width:144 height:52 style_sunkenedge:true
+		button btn_clear "Clear" pos:[4,51] width:76 height:24
 		
  		--label lbl_author "Author: walterlow88@gmail.com --" pos:[8,272] width:162 height:32
 
@@ -64,7 +67,7 @@ tooltip:"Bake Props Tool"
 			
 			ro_BakeTool.edt_Output.text = ro_BakeTool.GetRenderPath()
 			ro_BakeTool.LP = #()
-			ro_BakeTool.lbl_lowPoly.caption = "LP: "
+			ro_BakeTool.lbl_lowPoly.caption = "  "
 		)
 		
 		fn GetRenderPath =
@@ -101,11 +104,23 @@ tooltip:"Bake Props Tool"
 		(
 			superclassof obj == GeometryClass
 		)
+		
+		
+		fn GetUVW obj =
+		(
+			UVW = GetMods obj Unwrap_UVW
+			if UVW.count == 0 then return undefined
+			return UVW[1]
+		)
+		
+		fn RenderUVW obj =
+		(
+
+		)
 
 		fn BakeProps obj texsize =
 		(
-			local bp, bpp, df, ao, nm, mr, vfb
-			
+			local bp, bpp, df, ao, nm, mr, vfb, uvs, uvmod, tempLP
 			-- re-set path if user changes output dir
 			render_path = edt_Output.text
 			
@@ -149,46 +164,102 @@ tooltip:"Bake Props Tool"
 					ao.fileType = render_path + obj.name + "_AO" + ".png"
 					ao.fileName = render_path + obj.name + "_AO" + ".png"
 					
-					ao.samples = 16
+					ao.samples = 256
 					ao.spread = 1.5
 					ao.maxDistance = 0.3
 					ao.falloff = 1
 					
 					----------------------
 					-- AO PASS -- (Mental ray)
-					bp.removeAllBakeElements()
-					if ckb_AO.checked then bp.addBakeElement ao
-						
-
-					mr = renderers.current = mental_ray_renderer()
-					mr.FinalGatherEnable2 = false
-					mr.MinimumSamples = 0
-					mr.MaximumSamples = 2
+					--bp.removeAllBakeElements()
 					
-					if (bp.findByName "Ambient Occlusion (MR)" != 0 ) then
+					if ckb_AO.checked then
 					(
-						vfb = render renderType:#bakeSelected frame:#current vfb:chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize
-						if chk_autoclosevfb.state then close vfb			
+						bp.removeAllBakeElements()
+						bp.addBakeElement ao
+						
+						mr = renderers.current = mental_ray_renderer()
+						mr.FinalGatherEnable2 = false
+						mr.MinimumSamples = 0
+						mr.MaximumSamples = 2
+						
+						obj.visibility = 0.0
+						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize
+						obj.visibility = 1.0
+						if ro_BakeTool.chk_autoclosevfb.state then close vfb	
+					)
+	
+
+					
+-- 					if (bp.findByName "Ambient Occlusion (MR)" != 0 ) then
+-- 					(
+-- 						obj.visibility = 0.0
+-- 						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize
+-- 						obj.visibility = 1.0
+-- 						if ro_BakeTool.chk_autoclosevfb.state then close vfb			
+-- 					)
+				
+					
+					mr = Default_Scanline_Renderer()
+					mr.antiAliasFilter = Catmull_Rom()
+					mr.globalSamplerEnabled = true
+					mr.globalSamplerSampleMaps = true
+					mr.globalSamplerClassByName = "Hammersley"
+					mr.globalSamplerQuality = 1.0
+					
+					-- DIFFUSE AND NORMAL PASS -- (Scanline)
+					
+					if ckb_Diffuse.checked then
+					(
+						bp.removeAllBakeElements()
+						bp.addBakeElement df
+						bp.nDilations = 0
+						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize
+						if ro_BakeTool.chk_autoclosevfb.state then close vfb
+					)
+							
+					if ckb_Normal.checked then
+					(
+						bp.removeAllBakeElements()
+						bp.addBakeElement nm
+						bp.nDilations = 2
+						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize
+						if ro_BakeTool.chk_autoclosevfb.state then close vfb
 					)
 					
-					------------------------
-					-- DIFFUSE AND NORMAL PASS -- (Scanline)
-					bp.removeAllBakeElements()	
-					if ckb_Diffuse.checked then bp.addBakeElement df
-					if ckb_Normal.checked then bp.addBakeElement nm
+-- 					if (bp.numBakeElements() != 0 ) then
+-- 					(
+-- 						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize
+-- 						if ro_BakeTool.chk_autoclosevfb.state then close vfb
+-- 					) 
 					
-					sl = renderers.current = Default_Scanline_Renderer()
-					sl.antiAliasFilter = Catmull_Rom()
-					sl.globalSamplerEnabled = true
-					sl.globalSamplerSampleMaps = true
-					sl.globalSamplerClassByName = "Hammersley"
-					sl.globalSamplerQuality = 1.0
-					
-					if (bp.numBakeElements() != 0 ) then
+					if ckb_UVW.checked then
 					(
-						vfb = render renderType:#bakeSelected frame:#current vfb:chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize
-						if chk_autoclosevfb.state then close vfb
-					) 
+						max modify mode
+						tempLP = copy obj
+						select tempLP
+						
+						uvmod = Unwrap_UVW()
+						addmodifier tempLP uvmod
+			
+						uvmod.renderuv_width = texsize
+						uvmod.renderuv_height = texsize
+						
+						uvmod.renderuv_showframebuffer = false
+						uvmod.renderuv_showoverlap = false
+						
+						uvmod.renderuv_seamColor = green
+						uvmod.renderuv_edgeColor = white
+						uvmod.renderuv_fillColor = white
+						
+						uvmod.renderuv_fillmode = 0
+						uvmod.renderuv_visibleedges = true
+				
+						uvmod.renderUV (render_path + obj.name + "_UV" + ".png")
+ 						delete tempLP
+						select obj
+					)
+					
 	
 				)
 			)
@@ -196,9 +267,7 @@ tooltip:"Bake Props Tool"
 		) --end fn
 
 
-		-----------------------------------------------------------------------------------------------------------------------------------------------------------
-		-----------------------------------------------------------------------------------------------------------------------------------------------------------
-
+-------------------------------------------------
 		on ro_BakeTool open do
 		(
 			InitCallBacks()
@@ -210,6 +279,7 @@ tooltip:"Bake Props Tool"
 				setINISetting iniFile  "Elements" "Diffuse" "true" 
 				setINISetting iniFile 	"Elements" "Normals" "true" 
 				setINISetting iniFile  "Elements" "AO" "true" 
+				setINISetting iniFile  "Elements" "UVW" "true" 
 				
 				setINISetting iniFile "Settings" "ShowVFB" "true"
 				setINISetting iniFile "Settings" "AutoCloseVFB" "true"
@@ -225,6 +295,7 @@ tooltip:"Bake Props Tool"
 			ckb_Diffuse.checked = (getINISetting iniFile "Elements" "Diffuse") as BooleanClass
 			ckb_Normal.checked = (getINISetting iniFile "Elements" "Normals") as BooleanClass
 			ckb_AO.checked = (getINISetting iniFile "Elements" "AO") as BooleanClass
+			ckb_UVW.checked = (getINISetting iniFile "Elements" "UVW") as BooleanClass
 			ddl_textureSizes.selection = (getINISetting iniFile "Settings" "TexSize") as integer
 			chk_showvfb.checked = (getINISetting iniFile "Settings" "ShowVFB") as BooleanClass
 			chk_autoclosevfb.checked = (getINISetting iniFile "Settings" "AutoCloseVFB") as BooleanClass
@@ -232,7 +303,6 @@ tooltip:"Bake Props Tool"
 			SetDialogPos ro_BakeTool [ (getINISetting iniFile "Settings" "WinPosX") as float , (getINISetting iniFile "Settings" "WinPosY") as float]
 			
 		)
-		
 		on ro_BakeTool close do
 		(
 			
@@ -241,6 +311,8 @@ tooltip:"Bake Props Tool"
 			setINISetting iniFile  "Elements" "Diffuse" (ckb_Diffuse.checked as String)
 			setINISetting iniFile 	"Elements" "Normals" (ckb_Normal.checked as String)
 			setINISetting iniFile  "Elements" "AO" (ckb_AO.checked as String)
+			setINISetting iniFile  "Elements" "UVW" (ckb_UVW.checked as String)
+			
 			setINISetting iniFile "Settings" "TexSize" (ddl_textureSizes.selection as String)
 			setINISetting iniFile "Settings" "ShowVFB" (chk_showvfb.checked as String)
 			setINISetting iniFile "Settings" "AutoCloseVFB" (chk_autoclosevfb.checked as String)
@@ -251,7 +323,6 @@ tooltip:"Bake Props Tool"
 			setINISetting iniFile "Settings" "WinPosY" (pos[2] as String)
 		
 		)
-		
 		on btn_Bake pressed do
 		(
 			
@@ -280,19 +351,19 @@ tooltip:"Bake Props Tool"
 						---=====================================================-----
 			
 			--todo: force override buggy.
--- 			if LP.count == 1 and selection.count == 1 then
--- 			(	
--- 				if GetProj selection[1] != undefined then
--- 				(
--- 					messageBox ("Bake selection[activeSelection]: ")
--- 					BakeProps selection[1] (ddl_textureSizes.selected as integer)
--- 				)
--- 				else
--- 				(
--- 					messageBox ("Error 3: Select something or check Projection Mod")
--- 					
--- 				)	
--- 			)
+		-- 			if LP.count == 1 and selection.count == 1 then
+		-- 			(	
+		-- 				if GetProj selection[1] != undefined then
+		-- 				(
+		-- 					messageBox ("Bake selection[activeSelection]: ")
+		-- 					BakeProps selection[1] (ddl_textureSizes.selected as integer)
+		-- 				)
+		-- 				else
+		-- 				(
+		-- 					messageBox ("Error 3: Select something or check Projection Mod")
+		-- 					
+		-- 				)	
+		-- 			)
 			
 			--if LP is marked and nothing is selected, then we select the marked LP
 			if LP.count == 1 and selection.count == 0  then
@@ -308,7 +379,6 @@ tooltip:"Bake Props Tool"
 			)
 			
 		)
-		
 		on btn_OpenOutput pressed do
 		(
 			--print edt_Output.text
@@ -335,7 +405,7 @@ tooltip:"Bake Props Tool"
 			
 			if LP.count !=0 then ( select(LP[1]) )
 		)
-		on btn_Clear pressed do
+		on btn_clear pressed do
 		(
 			LP = #()
 			lbl_lowPoly.caption = "LP: "
