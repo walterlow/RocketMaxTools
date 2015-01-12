@@ -10,7 +10,7 @@ tooltip:"Bake Props Tool"
 	global ro_BakeTool
 	try (destroyDialog ro_BakeTool)catch()
 
-	rollout ro_BakeTool "RocketBakeTool 0.1" width:400 height:332
+	rollout ro_BakeTool "RocketBakeTool 0.1" width:402 height:268
 	(
 		
 		local fullpath
@@ -18,33 +18,47 @@ tooltip:"Bake Props Tool"
 		local inipath = getdir #userscripts + "\\RocketMaxTools\\"
 		local iniFile = inipath + "BakeTools.ini"
 		
-		
 		local LP = #()
 		
-		checkbutton ckb_Diffuse "Diffuse" pos:[8,143] width:78 height:28	
-	
-		checkbutton ckb_Normal "Normal" pos:[88,143] width:78 height:28
-		checkbutton ckb_AO "AO" pos:[168,143] width:56 height:28
-		checkbutton ckb_UVW "UVW" pos:[8,176] width:78 height:28
+		-------------------------------------------------
+		--UI Elements--
+		-------------------------------------------------	
 		
+		checkbutton ckb_Diffuse "Diffuse" pos:[88,154] width:78 height:28	
+		checkbutton ckb_Normal "Normal" pos:[168,154] width:78 height:28
+		checkbutton ckb_AO "AO" pos:[248,154] width:56 height:28
+		checkbutton ckb_UVW "UVW" pos:[4,154] width:78 height:28
+		checkbox chk_uvclip "Copy to clipboard" pos:[4,184] width:90 height:28
 		
-		button btn_Bake "Bake It!" pos:[80,220] width:60 height:40
-		button btn_OpenOutput "Open Output" pos:[144,220] width:80 height:40
+		button btn_Bake "Bake It!" pos:[4,216] width:180 height:48
+		button btn_OpenOutput "Open Output" pos:[188,216] width:100 height:48
 		
-		dropdownList ddl_textureSizes "Texture Size:" pos:[4,212] width:64 height:40 items:#("128", "256", "512", "1024", "2048")
-		edittext edt_Output "" pos:[4,103] width:176 height:24
-		label lbl_Output "Output Folder: " pos:[8,87] width:136 height:16
-		button btn_setFolder "Set" pos:[188,103] width:40 height:24
+		dropdownList ddl_textureSizes "Texture Size:" pos:[244,48] width:64 height:40 items:#("128", "256", "512", "1024", "2048")
+		edittext edt_Output "" pos:[0,113] width:352 height:17
+		label lbl_Output "Output Folder: " pos:[8,97] width:136 height:16
 		
-		checkbox chk_showvfb "Show VFB" pos:[4,272] width:88 height:22
-		checkbox chk_autoclosevfb "Auto close VFB" pos:[96,272] width:92 height:22
+		radiobuttons rdo_folder "" pos:[89,96] width:244 height:16 labels:#("Use default", "Use Custom Folder") default:1 columns:2
+-- 		button btn_setFolder "Set" pos:[356,114] width:40 height:24
 		
-		label lbl1 "OPTIONAL: " pos:[12,4] width:60 height:16
-		button btn_SetLowPoly "Mark/Select LP" pos:[4,23] width:76 height:24 toolTip:"Marking a LP is OPTIONAL but can be useful if you wanna continue working on your HP \n\nYou can bake the LP without selecting it afterwards."
-		label lbl_LowPoly "   " pos:[84,23] width:144 height:52 style_sunkenedge:true
-		button btn_clear "Clear" pos:[4,51] width:76 height:24
+		checkbox chk_showvfb "Show VFB" pos:[244,4] width:88 height:22
+		checkbox chk_autoclosevfb "Auto close VFB" pos:[244,24] width:92 height:22
+		
+		button btn_SelectLowPoly "Select LP" pos:[4,32] width:76 height:24
+		label lbl_LowPoly "   " pos:[84,28] width:144 height:52 style_sunkenedge:true
+		button btn_clear "Clear" pos:[4,60] width:76 height:24
+		checkbox chk_rmblowpoly "Remember Low Poly" pos:[92,4] width:123 height:20
+		
+		button btn_markLP "Mark LP" pos:[4,4] width:76 height:24
+		spinner spn_samples "Samples" pos:[330,156] width:70 height:16 range:[0,999,256] type:#integer scale:1 fieldwidth:40 
+		spinner spn_spread "Spread" pos:[330,176] width:70 height:16 range:[0,999,1.5] fieldwidth:40
+		spinner spn_maxdist "Max Dist" pos:[330,196] width:70 height:16 range:[0,999,0.3] fieldwidth:40
 		
  		--label lbl_author "Author: walterlow88@gmail.com --" pos:[8,272] width:162 height:32
+		
+		
+		-------------------------------------------------
+		--Methods--
+		-------------------------------------------------	
 
 		fn InitCallbacks =
 		(
@@ -113,10 +127,46 @@ tooltip:"Bake Props Tool"
 			return UVW[1]
 		)
 		
-		fn RenderUVW obj =
+		fn RenderUVW obj texsize =
 		(
+			--rendering uv template requires the mod panel to be active.
+			max modify mode
+			
+			local btmp = bitmap (texsize as integer) (texsize as integer)
+			
+			tempLP = copy obj
+			select tempLP
+			
+			uvmod = Unwrap_UVW()
+			addmodifier tempLP uvmod
 
+			uvmod.renderuv_width = texsize
+			uvmod.renderuv_height = texsize
+			
+			uvmod.renderuv_showframebuffer = false
+			uvmod.renderuv_showoverlap = false
+			
+			uvmod.renderuv_seamColor = green
+			uvmod.renderuv_edgeColor = white
+			--uvmod.renderuv_fillColor = white
+			
+			uvmod.renderuv_fillmode = 0
+			uvmod.renderuv_visibleedges = true
+			
+			theFileName = (render_path + obj.name + "_UV" + ".png")--define a temp.file name
+			uvmod.renderUV theFileName
+			
+			if chk_uvclip.checked == true then
+			(
+				btmp = openBitMap theFileName;
+				setclipboardBitmap btmp
+				--deleteFile theFileName; --delete the temp. file
+			)
+
+			delete tempLP
+			select obj
 		)
+		
 
 		fn BakeProps obj texsize =
 		(
@@ -164,14 +214,13 @@ tooltip:"Bake Props Tool"
 					ao.fileType = render_path + obj.name + "_AO" + ".png"
 					ao.fileName = render_path + obj.name + "_AO" + ".png"
 					
-					ao.samples = 256
-					ao.spread = 1.5
-					ao.maxDistance = 0.3
+					ao.samples = spn_samples.value
+					ao.spread = spn_spread.value
+					ao.maxDistance = spn_maxdist.value
 					ao.falloff = 1
 					
 					----------------------
 					-- AO PASS -- (Mental ray)
-					--bp.removeAllBakeElements()
 					
 					if ckb_AO.checked then
 					(
@@ -198,7 +247,9 @@ tooltip:"Bake Props Tool"
 -- 						obj.visibility = 1.0
 -- 						if ro_BakeTool.chk_autoclosevfb.state then close vfb			
 -- 					)
-				
+					
+					
+					--Change renderer to scanline for Diffuse and Normal maps
 					
 					mr = Default_Scanline_Renderer()
 					mr.antiAliasFilter = Catmull_Rom()
@@ -207,8 +258,7 @@ tooltip:"Bake Props Tool"
 					mr.globalSamplerClassByName = "Hammersley"
 					mr.globalSamplerQuality = 1.0
 					
-					-- DIFFUSE AND NORMAL PASS -- (Scanline)
-					
+					-- DIFFUSE PASS -- (Scanline)	
 					if ckb_Diffuse.checked then
 					(
 						bp.removeAllBakeElements()
@@ -217,7 +267,8 @@ tooltip:"Bake Props Tool"
 						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize
 						if ro_BakeTool.chk_autoclosevfb.state then close vfb
 					)
-							
+					
+					-- NORMAL PASS -- (Scanline)
 					if ckb_Normal.checked then
 					(
 						bp.removeAllBakeElements()
@@ -233,32 +284,11 @@ tooltip:"Bake Props Tool"
 -- 						if ro_BakeTool.chk_autoclosevfb.state then close vfb
 -- 					) 
 					
-					if ckb_UVW.checked then
-					(
-						max modify mode
-						tempLP = copy obj
-						select tempLP
-						
-						uvmod = Unwrap_UVW()
-						addmodifier tempLP uvmod
-			
-						uvmod.renderuv_width = texsize
-						uvmod.renderuv_height = texsize
-						
-						uvmod.renderuv_showframebuffer = false
-						uvmod.renderuv_showoverlap = false
-						
-						uvmod.renderuv_seamColor = green
-						uvmod.renderuv_edgeColor = white
-						uvmod.renderuv_fillColor = white
-						
-						uvmod.renderuv_fillmode = 0
-						uvmod.renderuv_visibleedges = true
-				
-						uvmod.renderUV (render_path + obj.name + "_UV" + ".png")
- 						delete tempLP
-						select obj
-					)
+-- 					if ckb_UVW.checked then
+-- 					(
+-- 						
+-- 						RenderUVW obj texsize
+-- 					)
 					
 	
 				)
@@ -268,6 +298,9 @@ tooltip:"Bake Props Tool"
 
 
 -------------------------------------------------
+		--UI EVENT HANDLERS--
+-------------------------------------------------	
+		
 		on ro_BakeTool open do
 		(
 			InitCallBacks()
@@ -289,9 +322,17 @@ tooltip:"Bake Props Tool"
 				setINISetting iniFile "Settings" "WinPosY" "0"
 			)
 				
-		
-			edt_Output.text = GetRenderPath()
-				
+			if (hasINISetting iniFile "Settings" "CustomFolder") then
+			(
+				rdo_folder.state = 2
+				edt_Output.text = (getINISetting iniFile "Settings" "CustomFolder") 
+			)
+			else
+			(
+				rdo_folder.state = 1
+				edt_Output.text = GetRenderPath()
+			)
+						
 			ckb_Diffuse.checked = (getINISetting iniFile "Elements" "Diffuse") as BooleanClass
 			ckb_Normal.checked = (getINISetting iniFile "Elements" "Normals") as BooleanClass
 			ckb_AO.checked = (getINISetting iniFile "Elements" "AO") as BooleanClass
@@ -303,6 +344,7 @@ tooltip:"Bake Props Tool"
 			SetDialogPos ro_BakeTool [ (getINISetting iniFile "Settings" "WinPosX") as float , (getINISetting iniFile "Settings" "WinPosY") as float]
 			
 		)
+		
 		on ro_BakeTool close do
 		(
 			
@@ -317,6 +359,13 @@ tooltip:"Bake Props Tool"
 			setINISetting iniFile "Settings" "ShowVFB" (chk_showvfb.checked as String)
 			setINISetting iniFile "Settings" "AutoCloseVFB" (chk_autoclosevfb.checked as String)
 			
+			
+			--store custom folder
+			if (rdo_folder.state == 2) then
+			(
+				setINISetting iniFile "Settings" "CustomFolder" edt_Output.text
+			)
+			
 			local pos = GetDialogPos ro_BakeTool
 			
 			setINISetting iniFile "Settings" "WinPosX" (pos[1] as String)
@@ -325,8 +374,8 @@ tooltip:"Bake Props Tool"
 		)
 		on btn_Bake pressed do
 		(
-			
-			if LP.count == 1 then
+			-------- bake elements methods----------
+			if LP.count == 1 and chk_rmblowpoly.checked == true then
 			(
 				clearSelection()
 				select LP[1]
@@ -346,27 +395,30 @@ tooltip:"Bake Props Tool"
 					--messageBox ("Bake selection[activeSelection]")	
 					BakeProps selection[1] (ddl_textureSizes.selected as integer)
 				)
-				else ( messageBox ("Error 2: check Projection Mod") )
+				else
+				(
+					messageBox ("Error 2: check Projection Mod")
+				)
 			)
 						---=====================================================-----
 			
-			--todo: force override buggy.
-		-- 			if LP.count == 1 and selection.count == 1 then
-		-- 			(	
-		-- 				if GetProj selection[1] != undefined then
-		-- 				(
-		-- 					messageBox ("Bake selection[activeSelection]: ")
-		-- 					BakeProps selection[1] (ddl_textureSizes.selected as integer)
-		-- 				)
-		-- 				else
-		-- 				(
-		-- 					messageBox ("Error 3: Select something or check Projection Mod")
-		-- 					
-		-- 				)	
-		-- 			)
+			--todo: force override marked.
+			if (LP.count == 1 and selection.count == 1 and chk_rmblowpoly.checked == false) then
+			(	
+				if GetProj selection[1] != undefined then
+				(
+					--messageBox ("Bake selection[activeSelection_forceoveride] ")
+					BakeProps selection[1] (ddl_textureSizes.selected as integer)
+				)
+				else
+				(
+					messageBox ("Error 3: Select something or check Projection Mod")
+					
+				)	
+			)
 			
 			--if LP is marked and nothing is selected, then we select the marked LP
-			if LP.count == 1 and selection.count == 0  then
+			if (LP.count == 1 and selection.count == 0 and chk_rmblowpoly.checked == true) then
 			(	
 				if GetProj LP[1] != undefined then
 				(
@@ -378,39 +430,84 @@ tooltip:"Bake Props Tool"
 				else ( messageBox ("Error 4: Select something or check Projection Mod"); select LP[1] )
 			)
 			
+			-------- uvw template methods----------
+			if ckb_UVW.state == true then
+			(
+				print ("saving uvs")
+				ro_baketool.RenderUVW selection[1] (ddl_textureSizes.selected as integer)
+			)
 		)
+		
 		on btn_OpenOutput pressed do
 		(
 			--print edt_Output.text
 			shellLaunch "explorer.exe" edt_Output.text
 		)
-		on edt_Output changed txt do
+		
+		on edt_Output entered txt do
 		(
-			if txt != "" then ( edt_Output.text = txt )
+			if txt != "" then ( edt_Output.text = txt + "\\" )
+			rdo_folder.state = 2
 		)
-		on btn_setFolder pressed do
+		
+		on rdo_folder changed state do
 		(
-			savepath = getSavePath caption:"Select folder to save textures" initialDir: "C:\\Projects\\Cow2\\Assets\\"
-			if savepath != undefined then edt_Output.text = savepath + "\\"
-		)
-		on btn_SetLowPoly pressed do
-		(
+			--default folder
+			if rdo_folder.state == 1 then
+			(
+				edt_Output.text = ro_BakeTool.GetRenderPath()
+				
+				if ( hasINISetting iniFile "Settings" "CustomFolder" ) then
+				(
+					delIniSetting iniFile "Settings" "CustomFolder"
+				)
+			)
 			
+			--custom folder
+			if rdo_folder.state == 2 then
+			(
+				savepath = getSavePath caption:"Select folder to save textures" initialDir: "C:\\Projects\\Cow2\\Assets\\"
+				if savepath != undefined then
+				(
+					edt_Output.text = savepath + "\\"
+				)
+				else( rdo_folder.state=1 )
+			)
+		)
+		
+-- 		on btn_setFolder pressed do
+-- 		(
+-- 			savepath = getSavePath caption:"Select folder to save textures" initialDir: "C:\\Projects\\Cow2\\Assets\\"
+-- 			if savepath != undefined then edt_Output.text = savepath + "\\"
+-- 			else
+-- 			(
+-- 				
+-- 			)
+-- 		)
+		
+		on btn_SelectLowPoly pressed do
+		(
+			if LP.count !=0 then ( select(LP[1]) )
+		)
+		
+		on btn_clear pressed do
+		(
+			LP = #()
+			lbl_lowPoly.caption = "  "
+			chk_rmblowpoly.checked = false
+		)
+		
+		on btn_markLP pressed do
+		(
 			if selection.count == 1 then
 			(
 				LP = #()
 				append LP selection[1]
 				lbl_lowPoly.caption = LP[1].name
-			)
-			
-			if LP.count !=0 then ( select(LP[1]) )
+				chk_rmblowpoly.checked = true
+			)		
 		)
-		on btn_clear pressed do
-		(
-			LP = #()
-			lbl_lowPoly.caption = "LP: "
-		)
-	)
+	) --end rollout
 	
 createDialog ro_BakeTool
 	
