@@ -28,7 +28,7 @@ tooltip:"Bake Props Tool"
 		checkbutton ckb_Normal "Normal" pos:[168,154] width:78 height:28
 		checkbutton ckb_AO "AO" pos:[248,154] width:56 height:28
 		checkbutton ckb_UVW "UVW" pos:[4,154] width:78 height:28
-		checkbox chk_uvclip "Copy to clipboard" pos:[4,184] width:90 height:28
+		checkbox chk_uvclipboard "Copy to clipboard" pos:[4,184] width:90 height:28
 		
 		button btn_Bake "Bake It!" pos:[4,216] width:180 height:48
 		button btn_OpenOutput "Open Output" pos:[188,216] width:100 height:48
@@ -66,7 +66,6 @@ tooltip:"Bake Props Tool"
 			callbacks.addScript #systemPostNew "ro_BakeTool.callback_SceneChanged()" id:#callback_RefreshUI
 			callbacks.addScript #systemPostReset "ro_BakeTool.callback_SceneChanged()" id:#callback_RefreshUI
 			callbacks.addScript #filePostOpen "ro_BakeTool.callback_SceneChanged()" id:#callback_RefreshUI
-
 		)
 		
 		fn DestroyCallbacks=
@@ -127,12 +126,12 @@ tooltip:"Bake Props Tool"
 			return UVW[1]
 		)
 		
-		fn RenderUVW obj texsize =
+		fn RenderUVW obj texsize render_path =
 		(
 			--rendering uv template requires the mod panel to be active.
 			max modify mode
 			
-			local btmp = bitmap (texsize as integer) (texsize as integer)
+			local btmp = bitmap texsize texsize
 			
 			tempLP = copy obj
 			select tempLP
@@ -153,10 +152,10 @@ tooltip:"Bake Props Tool"
 			uvmod.renderuv_fillmode = 0
 			uvmod.renderuv_visibleedges = true
 			
-			theFileName = (render_path + obj.name + "_UV" + ".png")--define a temp.file name
+			theFileName = (render_path + obj.name + "_UV" + ".png")--define a temp.file name 
 			uvmod.renderUV theFileName
 			
-			if chk_uvclip.checked == true then
+			if chk_uvclipboard.checked == true then
 			(
 				btmp = openBitMap theFileName;
 				setclipboardBitmap btmp
@@ -166,17 +165,16 @@ tooltip:"Bake Props Tool"
 			delete tempLP
 			select obj
 		)
-		
 
-		fn BakeProps obj texsize =
+		fn BakeProps obj texsize render_path =
 		(
 			local bp, bpp, df, ao, nm, mr, vfb, uvs, uvmod, tempLP
 			-- re-set path if user changes output dir
-			render_path = edt_Output.text
+			--render_path = edt_Output.text
 			
 			if (selection.count == 1 OR LP.count == 1) then
 			(
-				if (classof obj.baseobject == Editable_Poly or classof $.baseobject == Editable_Poly or classof LP[1].baseobject == Editable_Poly) then
+				if (classof obj.baseobject == Editable_Poly or classof LP[1].baseobject == Editable_Poly) then
 				(
 					if (not (doesfileExist render_path) ) then ( MAKEDir render_path)
 
@@ -239,16 +237,6 @@ tooltip:"Bake Props Tool"
 					)
 	
 
-					
--- 					if (bp.findByName "Ambient Occlusion (MR)" != 0 ) then
--- 					(
--- 						obj.visibility = 0.0
--- 						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize
--- 						obj.visibility = 1.0
--- 						if ro_BakeTool.chk_autoclosevfb.state then close vfb			
--- 					)
-					
-					
 					--Change renderer to scanline for Diffuse and Normal maps
 					
 					mr = Default_Scanline_Renderer()
@@ -278,19 +266,7 @@ tooltip:"Bake Props Tool"
 						if ro_BakeTool.chk_autoclosevfb.state then close vfb
 					)
 					
--- 					if (bp.numBakeElements() != 0 ) then
--- 					(
--- 						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize
--- 						if ro_BakeTool.chk_autoclosevfb.state then close vfb
--- 					) 
 					
--- 					if ckb_UVW.checked then
--- 					(
--- 						
--- 						RenderUVW obj texsize
--- 					)
-					
-	
 				)
 			)
 			else( MessageBox("Select Something!") )
@@ -372,51 +348,93 @@ tooltip:"Bake Props Tool"
 			setINISetting iniFile "Settings" "WinPosY" (pos[2] as String)
 		
 		)
+		
 		on btn_Bake pressed do
 		(
+			--------------------------------------------
 			-------- bake elements methods----------
-			if LP.count == 1 and chk_rmblowpoly.checked == true then
-			(
-				clearSelection()
-				select LP[1]
-				unhide LP[1]
-				BakeProps LP[1] (ddl_textureSizes.selected as integer)
-			)
-			
-			if LP.count == 0 and selection.count == 0  then
+			----------------------------------------------
+					
+			-------------Scenario 1-------------------
+			if LP.count == 0 and selection.count == 0 then
 			(	
-				messageBox ("Error 1: Select something or check Projection Mod")
+				messageBox ("Error 1: Select something")
 			)
 			
+			-------------Scenario 2-------------------
 			if LP.count == 0 and selection.count == 1  then
 			(	
 				if GetProj selection[1] != undefined then
 				(
 					--messageBox ("Bake selection[activeSelection]")	
-					BakeProps selection[1] (ddl_textureSizes.selected as integer)
+					BakeProps selection[1] (ddl_textureSizes.selected as integer) edt_Output.text
 				)
 				else
 				(
-					messageBox ("Error 2: check Projection Mod")
+					
+					if ( ckb_UVW.checked == true ) then
+					(
+						
+						RenderUVW selection[1] (ddl_textureSizes.selected as integer) edt_Output.text
+					)
+					else
+					(
+						messageBox ("Error 2: check Projection Mod")
+					)
+					
 				)
 			)
-						---=====================================================-----
 			
+			-------------Scenario 3-------------------
 			--todo: force override marked.
 			if (LP.count == 1 and selection.count == 1 and chk_rmblowpoly.checked == false) then
 			(	
 				if GetProj selection[1] != undefined then
 				(
 					--messageBox ("Bake selection[activeSelection_forceoveride] ")
-					BakeProps selection[1] (ddl_textureSizes.selected as integer)
+					BakeProps selection[1] (ddl_textureSizes.selected as integer) edt_Output.text
 				)
 				else
 				(
-					messageBox ("Error 3: Select something or check Projection Mod")
-					
+					if ( ckb_UVW.checked == true ) then
+					(
+						--renderuvw
+						RenderUVW selection[1] (ddl_textureSizes.selected as integer) edt_Output.text
+					)
+					else
+					(
+						messageBox ("Error 3: Select something or check Projection Mod")
+					)
+						
 				)	
 			)
 			
+			-------------Scenario 4-------------------
+			if (LP.count == 1 and selection.count == 1 and chk_rmblowpoly.checked == true) then
+			(	
+				if GetProj LP[1] != undefined then
+				(
+					--messageBox ("Bake marker: ")
+					select LP[1]
+					unhide LP[1]
+					BakeProps LP[1] (ddl_textureSizes.selected as integer) edt_Output.text
+				)
+				else
+				(
+					if ( ckb_UVW.checked == true ) then
+					(
+						--renderuvw
+						RenderUVW LP[1] (ddl_textureSizes.selected as integer) edt_Output.text
+					)
+					else
+					(
+						messageBox ("Error 4: Select something or check Projection Mod"); select LP[1]
+					)
+					
+				)
+			)
+		
+			-------------Scenario 5-------------------
 			--if LP is marked and nothing is selected, then we select the marked LP
 			if (LP.count == 1 and selection.count == 0 and chk_rmblowpoly.checked == true) then
 			(	
@@ -425,16 +443,35 @@ tooltip:"Bake Props Tool"
 					--messageBox ("Bake marker: ")
 					select LP[1]
 					unhide LP[1]
-					BakeProps LP[1] (ddl_textureSizes.selected as integer)
+					BakeProps LP[1] (ddl_textureSizes.selected as integer) edt_Output.text
 				)
-				else ( messageBox ("Error 4: Select something or check Projection Mod"); select LP[1] )
+				else
+				(
+					if ( ckb_UVW.checked == true ) then
+					(
+						--renderuvw
+						RenderUVW LP[1] (ddl_textureSizes.selected as integer) edt_Output.text
+					)
+					else
+					(
+						messageBox ("Error 4: Select something or check Projection Mod"); select LP[1]
+					)
+					
+				)
+			)
+			
+			-------------Scenario 6-------------------
+			--if LP is marked and nothing is selected, then we select the marked LP
+			if (LP.count == 1 and selection.count == 0 and chk_rmblowpoly.checked == false) then
+			(					
+				messageBox ("Error 5: You turned off Remember Low Poly"); select LP[1]
 			)
 			
 			-------- uvw template methods----------
 			if ckb_UVW.state == true then
 			(
 				print ("saving uvs")
-				ro_baketool.RenderUVW selection[1] (ddl_textureSizes.selected as integer)
+				RenderUVW selection[1] (ddl_textureSizes.selected as integer) edt_Output.text
 			)
 		)
 		
@@ -475,15 +512,6 @@ tooltip:"Bake Props Tool"
 			)
 		)
 		
--- 		on btn_setFolder pressed do
--- 		(
--- 			savepath = getSavePath caption:"Select folder to save textures" initialDir: "C:\\Projects\\Cow2\\Assets\\"
--- 			if savepath != undefined then edt_Output.text = savepath + "\\"
--- 			else
--- 			(
--- 				
--- 			)
--- 		)
 		
 		on btn_SelectLowPoly pressed do
 		(
