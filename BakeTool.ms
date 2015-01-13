@@ -1,3 +1,17 @@
+--------------
+/*
+
+Changes:
+0.2: 
++ uv copying
++ added AO sample options
++ added use custom folder option
+* changed method of marking low poly
+
+Author: Walter Low
+*/
+---------------
+
 macroScript BakeTool category:"RocketBirds"
 tooltip:"Bake Props Tool"
 (
