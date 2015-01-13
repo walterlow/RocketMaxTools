@@ -10,16 +10,13 @@ tooltip:"Bake Props Tool"
 	
 	try (destroyDialog ro_BakeTool)catch()
 
-	rollout ro_BakeTool "RocketBakeTool 0.1" width:402 height:268
+	rollout ro_BakeTool "RocketBakeTool 0.2" width:402 height:268
 	(
 		
 		local fullpath
 		local render_path
 		local inipath = getdir #userscripts + "\\RocketMaxTools\\"
 		local iniFile = inipath + "BakeTools.ini"
-		
-		--local theRenderer = renderers.current
-		
 		local LP = #()
 		
 		-------------------------------------------------
@@ -30,7 +27,7 @@ tooltip:"Bake Props Tool"
 		checkbutton ckb_Normal "Normal" pos:[168,154] width:78 height:28
 		checkbutton ckb_AO "AO" pos:[248,154] width:56 height:28
 		checkbutton ckb_UVW "UVW" pos:[4,154] width:78 height:28
-		checkbox chk_uvclipboard "Copy to clipboard" pos:[4,184] width:90 height:28
+		checkbox chk_uvclipboard "Copy UV to clipboard" pos:[4,184] width:90 height:28
 		
 		button btn_Bake "Bake It!" pos:[4,216] width:180 height:48
 		button btn_OpenOutput "Open Output" pos:[188,216] width:100 height:48
@@ -135,83 +132,71 @@ tooltip:"Bake Props Tool"
 			
 			local btmp = bitmap texsize texsize
 			
-			tempLP = copy obj
-			select tempLP
-			
-			uvmod = Unwrap_UVW()
-			addmodifier tempLP uvmod
-
-			uvmod.renderuv_width = texsize
-			uvmod.renderuv_height = texsize
-			
-			uvmod.renderuv_showframebuffer = false
-			uvmod.renderuv_showoverlap = false
-			
-			uvmod.renderuv_seamColor = green
-			uvmod.renderuv_edgeColor = white
-			--uvmod.renderuv_fillColor = white
-			
-			uvmod.renderuv_fillmode = 0
-			uvmod.renderuv_visibleedges = true
-			
-			theFileName = (render_path + obj.name + "_UV" + ".png")--define a temp.file name 
-			uvmod.renderUV theFileName
-			
-			if chk_uvclipboard.checked == true then
+			if obj != undefined then
 			(
-				btmp = openBitMap theFileName;
-				setclipboardBitmap btmp
-				--deleteFile theFileName; --delete the temp. file
-			)
+				--tempLP = copy obj
+				--select tempLP
+				
+				uvmod = Unwrap_UVW()
+				--addmodifier tempLP uvmod
+				addmodifier obj uvmod
+				
+				uvmod.renderuv_width = texsize
+				uvmod.renderuv_height = texsize
+				
+				uvmod.renderuv_showframebuffer = false
+				uvmod.renderuv_showoverlap = false
+				
+				uvmod.renderuv_seamColor = green
+				uvmod.renderuv_edgeColor = white
+				--uvmod.renderuv_fillColor = white
+				
+				uvmod.renderuv_fillmode = 0
+				uvmod.renderuv_visibleedges = true
+				
+				theFileName = (render_path + obj.name + "_UV" + ".png")--define a temp.file name 
+				uvmod.renderUV theFileName
+				
+				if chk_uvclipboard.checked == true then
+				(
+					btmp = openBitMap theFileName;
+					setclipboardBitmap btmp
+					print ("UVs copied to clipboard")
+					--deleteFile theFileName; --delete the temp. file
+				)
 
-			delete tempLP
-			select obj
+				--delete tempLP
+				deletemodifier obj uvmod
+				select obj
+			)
+			
 		)
 
 		fn BakeProps obj texsize render_path =
 		(
 			local bp, bpp, df, ao, nm, mr, vfb, uvs, uvmod, tempLP
-			-- re-set path if user changes output dir
-			--render_path = edt_Output.text
 			
 			if (selection.count == 1 OR LP.count == 1) then
 			(
 				if (classof obj.baseobject == Editable_Poly or classof LP[1].baseobject == Editable_Poly) then
 				(
 					if (not (doesfileExist render_path) ) then ( MAKEDir render_path)
-
+					
 					proj = GetProj obj
 					
 					if proj != undefined then proj.setGeomSelNodesVisibility true
+					
+					bp = obj.INodeBakeProperties
+					bp.removeAllBakeElements()
+					bp.bakeEnabled = true
+					bp.bakeChannel = 1
+					bp.nDilations = 2
 					
 					bpp = obj.INodeBakeProjProperties
 					bpp.enabled = true
 					bpp.UseCage = true
 					bpp.projectionMod = proj
 					bpp.hitMatchMtlID = false
-					
-					--Diffuse
-					df = DiffuseMap()
-					df.outputSzX = df.outputSzY = texsize
-					df.fileType = render_path + obj.name + "_DiffuseMask" + ".png"
-					df.fileName = render_path + obj.name + "_DiffuseMask" + ".png"
-					
-					--Normals
-					nm = NormalsMap()
-					nm.outputSzX = nm.outputSzY = texsize
-					nm.fileType = render_path + obj.name + "_Normals" + ".png"
-					nm.fileName = render_path + obj.name + "_Normals" + ".png"
-			
-					--AOmap
-					ao = Ambient_Occlusion()
-					ao.outputSzX = ao.outputSzY = texsize
-					ao.fileType = render_path + obj.name + "_AO" + ".png"
-					ao.fileName = render_path + obj.name + "_AO" + ".png"
-					
-					ao.samples = spn_samples.value
-					ao.spread = spn_spread.value
-					ao.maxDistance = spn_maxdist.value
-					ao.falloff = 1
 					
 					
 					renderers.current = Default_Scanline_Renderer()
@@ -221,68 +206,80 @@ tooltip:"Bake Props Tool"
 					renderers.current.globalSamplerClassByName = "Hammersley"
 					renderers.current.globalSamplerQuality = 1.0
 					
+					obj.visibility = true
+
 					-- DIFFUSE PASS -- (Scanline)	
 					if ckb_Diffuse.checked then
 					(
-						vfb = undefined
 						print("Baking DiffuseMask Pass")
-						
-						bp = obj.INodeBakeProperties
+
 						bp.removeAllBakeElements()
-						bp.bakeEnabled = true
-						bp.bakeChannel = 1
 						bp.nDilations = 0
-						bp.addBakeElement df
 						
-						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state outputwidth:texsize outputheight:texsize
+						df = DiffuseMap()
+						df.outputSzX = df.outputSzY = texsize
+						df.fileType = render_path + obj.name + "_DiffuseMask" + ".png"
+						df.fileName = render_path + obj.name + "_DiffuseMask" + ".png"
+						
+						bp.addBakeElement df
+					
+						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize
 						if ro_BakeTool.chk_autoclosevfb.state then close vfb
 					)
 					
 					-- NORMAL PASS -- (Scanline)
 					if ckb_Normal.checked then
 					(	
-						vfb = undefined
 						print("Baking Normal Pass")
-						bp = obj.INodeBakeProperties
-						bp.removeAllBakeElements()
-						bp.bakeEnabled = true
-						bp.bakeChannel = 1
-						bp.nDilations = 2
-						bp.addBakeElement nm
 						
-						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state outputwidth:texsize outputheight:texsize
+						bp.removeAllBakeElements()
+						bp.nDilations = 2
+						
+						--Normals
+						nm = NormalsMap()
+						nm.outputSzX = nm.outputSzY = texsize
+						nm.fileType = render_path + obj.name + "_Normals" + ".png"
+						nm.fileName = render_path + obj.name + "_Normals" + ".png"
+
+						bp.addBakeElement nm
+
+						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize
 						if ro_BakeTool.chk_autoclosevfb.state then close vfb
 					)
 					
-								----------------------
-					-- AO PASS -- (Mental ray)
 					
+					-- AO PASS -- (Mental ray)
 					if ckb_AO.checked then
 					(
-						vfb = undefined
 						print("Baking AO Pass")
 						
-						bp = obj.INodeBakeProperties
-						bp.removeAllBakeElements()
-						bp.bakeEnabled = true
-						bp.bakeChannel = 1
-						bp.nDilations = 2
-						bp.addBakeElement ao
-						
-				
 						renderers.current  = mental_ray_renderer()	
 						renderers.current.FinalGatherEnable2 = false
 						renderers.current.MinimumSamples = 0
 						renderers.current.MaximumSamples = 2
+						
+						bp.removeAllBakeElements()
+						bp.nDilations = 2
 	
-						obj.visibility = 0.0
--- 						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:false outputwidth:texsize outputheight:texsize
-						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state outputwidth:texsize outputheight:texsize
-						obj.visibility = 1.0
-						if ro_BakeTool.chk_autoclosevfb.state then close vfb	
+						ao = Ambient_Occlusion()	
+						ao.outputSzX = ao.outputSzY = texsize
+						ao.fileType = render_path + obj.name + "_AO" + ".png"
+						ao.fileName = render_path + obj.name + "_AO" + ".png"
+						
+						ao.samples = spn_samples.value
+						ao.spread = spn_spread.value
+						ao.maxDistance = spn_maxdist.value
+						ao.falloff = 1
+						
+						bp.addBakeElement ao
+										
+						obj.visibility = off
+						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize
+						obj.visibility = on
+							
+						if ro_BakeTool.chk_autoclosevfb.state then close vfb
 					)
-					
-					
+				
 				)
 			)
 			else( MessageBox("Select Something!") )
@@ -305,6 +302,8 @@ tooltip:"Bake Props Tool"
 				setINISetting iniFile 	"Elements" "Normals" "true" 
 				setINISetting iniFile  "Elements" "AO" "true" 
 				setINISetting iniFile  "Elements" "UVW" "true" 
+				setINISetting iniFile  "Settings" "UVClipboard" "true" 
+				
 				
 				setINISetting iniFile "Settings" "ShowVFB" "true"
 				setINISetting iniFile "Settings" "AutoCloseVFB" "true"
@@ -332,6 +331,7 @@ tooltip:"Bake Props Tool"
 			ddl_textureSizes.selection = (getINISetting iniFile "Settings" "TexSize") as integer
 			chk_showvfb.checked = (getINISetting iniFile "Settings" "ShowVFB") as BooleanClass
 			chk_autoclosevfb.checked = (getINISetting iniFile "Settings" "AutoCloseVFB") as BooleanClass
+			chk_uvclipboard.checked = (getINISetting iniFile "Settings" "UVClipboard") as BooleanClass
 			
 			SetDialogPos ro_BakeTool [ (getINISetting iniFile "Settings" "WinPosX") as float , (getINISetting iniFile "Settings" "WinPosY") as float]
 			
@@ -346,6 +346,7 @@ tooltip:"Bake Props Tool"
 			setINISetting iniFile 	"Elements" "Normals" (ckb_Normal.checked as String)
 			setINISetting iniFile  "Elements" "AO" (ckb_AO.checked as String)
 			setINISetting iniFile  "Elements" "UVW" (ckb_UVW.checked as String)
+			setINISetting iniFile  "Settings" "UVClipboard" (chk_uvclipboard.checked as String)
 			
 			setINISetting iniFile "Settings" "TexSize" (ddl_textureSizes.selection as String)
 			setINISetting iniFile "Settings" "ShowVFB" (chk_showvfb.checked as String)
@@ -390,7 +391,7 @@ tooltip:"Bake Props Tool"
 					
 					if ( ckb_UVW.checked == true ) then
 					(
-						
+						Print("No Projection Mod Found, render UVs only")
 						RenderUVW selection[1] (ddl_textureSizes.selected as integer) edt_Output.text
 					)
 					else
@@ -414,7 +415,7 @@ tooltip:"Bake Props Tool"
 				(
 					if ( ckb_UVW.checked == true ) then
 					(
-						--renderuvw
+						print("No Projection Mod Found, render UVs only")
 						RenderUVW selection[1] (ddl_textureSizes.selected as integer) edt_Output.text
 					)
 					else
@@ -439,7 +440,7 @@ tooltip:"Bake Props Tool"
 				(
 					if ( ckb_UVW.checked == true ) then
 					(
-						--renderuvw
+						print("No Projection Mod Found, render UVs only")
 						RenderUVW LP[1] (ddl_textureSizes.selected as integer) edt_Output.text
 					)
 					else
@@ -465,7 +466,7 @@ tooltip:"Bake Props Tool"
 				(
 					if ( ckb_UVW.checked == true ) then
 					(
-						--renderuvw
+						print("No Projection Mod Found, render UVs only")
 						RenderUVW LP[1] (ddl_textureSizes.selected as integer) edt_Output.text
 					)
 					else
@@ -486,7 +487,7 @@ tooltip:"Bake Props Tool"
 			-------- uvw template methods----------
 			if ckb_UVW.state == true then
 			(
-				
+				print("No Projection Mod Found, render UVs only")
 				RenderUVW selection[1] (ddl_textureSizes.selected as integer) edt_Output.text
 			)
 		)
