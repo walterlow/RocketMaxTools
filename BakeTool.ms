@@ -5,9 +5,9 @@ tooltip:"Bake Props Tool"
 )
 
 (
-	
-	
+
 	global ro_BakeTool
+	
 	try (destroyDialog ro_BakeTool)catch()
 
 	rollout ro_BakeTool "RocketBakeTool 0.1" width:402 height:268
@@ -17,6 +17,8 @@ tooltip:"Bake Props Tool"
 		local render_path
 		local inipath = getdir #userscripts + "\\RocketMaxTools\\"
 		local iniFile = inipath + "BakeTools.ini"
+		
+		--local theRenderer = renderers.current
 		
 		local LP = #()
 		
@@ -178,12 +180,6 @@ tooltip:"Bake Props Tool"
 				(
 					if (not (doesfileExist render_path) ) then ( MAKEDir render_path)
 
-					bp = obj.INodeBakeProperties
-					bp.removeAllBakeElements()
-					bp.bakeEnabled = true
-					bp.bakeChannel = 1
-					bp.nDilations = 2
-					
 					proj = GetProj obj
 					
 					if proj != undefined then proj.setGeomSelNodesVisibility true
@@ -217,53 +213,73 @@ tooltip:"Bake Props Tool"
 					ao.maxDistance = spn_maxdist.value
 					ao.falloff = 1
 					
-					----------------------
-					-- AO PASS -- (Mental ray)
 					
-					if ckb_AO.checked then
-					(
-						bp.removeAllBakeElements()
-						bp.addBakeElement ao
-						
-						mr = renderers.current = mental_ray_renderer()
-						mr.FinalGatherEnable2 = false
-						mr.MinimumSamples = 0
-						mr.MaximumSamples = 2
-						
-						obj.visibility = 0.0
-						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize
-						obj.visibility = 1.0
-						if ro_BakeTool.chk_autoclosevfb.state then close vfb	
-					)
-	
-
-					--Change renderer to scanline for Diffuse and Normal maps
-					
-					mr = Default_Scanline_Renderer()
-					mr.antiAliasFilter = Catmull_Rom()
-					mr.globalSamplerEnabled = true
-					mr.globalSamplerSampleMaps = true
-					mr.globalSamplerClassByName = "Hammersley"
-					mr.globalSamplerQuality = 1.0
+					renderers.current = Default_Scanline_Renderer()
+					renderers.current.antiAliasFilter = Catmull_Rom()
+					renderers.current.globalSamplerEnabled = true
+					renderers.current.globalSamplerSampleMaps = true
+					renderers.current.globalSamplerClassByName = "Hammersley"
+					renderers.current.globalSamplerQuality = 1.0
 					
 					-- DIFFUSE PASS -- (Scanline)	
 					if ckb_Diffuse.checked then
 					(
+						vfb = undefined
+						print("Baking DiffuseMask Pass")
+						
+						bp = obj.INodeBakeProperties
 						bp.removeAllBakeElements()
-						bp.addBakeElement df
+						bp.bakeEnabled = true
+						bp.bakeChannel = 1
 						bp.nDilations = 0
-						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize
+						bp.addBakeElement df
+						
+						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state outputwidth:texsize outputheight:texsize
 						if ro_BakeTool.chk_autoclosevfb.state then close vfb
 					)
 					
 					-- NORMAL PASS -- (Scanline)
 					if ckb_Normal.checked then
-					(
+					(	
+						vfb = undefined
+						print("Baking Normal Pass")
+						bp = obj.INodeBakeProperties
 						bp.removeAllBakeElements()
-						bp.addBakeElement nm
+						bp.bakeEnabled = true
+						bp.bakeChannel = 1
 						bp.nDilations = 2
-						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize
+						bp.addBakeElement nm
+						
+						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state outputwidth:texsize outputheight:texsize
 						if ro_BakeTool.chk_autoclosevfb.state then close vfb
+					)
+					
+								----------------------
+					-- AO PASS -- (Mental ray)
+					
+					if ckb_AO.checked then
+					(
+						vfb = undefined
+						print("Baking AO Pass")
+						
+						bp = obj.INodeBakeProperties
+						bp.removeAllBakeElements()
+						bp.bakeEnabled = true
+						bp.bakeChannel = 1
+						bp.nDilations = 2
+						bp.addBakeElement ao
+						
+				
+						renderers.current  = mental_ray_renderer()	
+						renderers.current.FinalGatherEnable2 = false
+						renderers.current.MinimumSamples = 0
+						renderers.current.MaximumSamples = 2
+	
+						obj.visibility = 0.0
+-- 						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:false outputwidth:texsize outputheight:texsize
+						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state outputwidth:texsize outputheight:texsize
+						obj.visibility = 1.0
+						if ro_BakeTool.chk_autoclosevfb.state then close vfb	
 					)
 					
 					
@@ -470,7 +486,7 @@ tooltip:"Bake Props Tool"
 			-------- uvw template methods----------
 			if ckb_UVW.state == true then
 			(
-				print ("saving uvs")
+				
 				RenderUVW selection[1] (ddl_textureSizes.selected as integer) edt_Output.text
 			)
 		)
