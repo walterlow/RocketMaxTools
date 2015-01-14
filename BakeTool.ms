@@ -55,8 +55,8 @@ tooltip:"Bake Props Tool"
 		
 		checkbox chk_fixratio "1:1" pos:[360,98] width:39 height:15
 		checkbox chk_customsize "Custom" pos:[344,40] width:59 height:15
-		spinner spn_xsize "Width:" pos:[330,60] width:70 height:16 range:[0,9999,256] type:#integer scale:1 fieldwidth:40
-		spinner spn_ysize "Height:" pos:[330,80] width:70 height:16 range:[0,9999,256] type:#integer scale:1 fieldwidth:40
+		spinner spn_xsize "Width:" pos:[330,60] width:70 height:16 range:[0,9999,1] type:#integer scale:1 fieldwidth:40
+		spinner spn_ysize "Height:" pos:[330,80] width:70 height:16 range:[0,9999,1] type:#integer scale:1 fieldwidth:40
 		
 		edittext edt_Output "" pos:[0,113] width:352 height:17
 		label lbl_Output "Output Folder: " pos:[8,97] width:136 height:16
@@ -151,12 +151,12 @@ tooltip:"Bake Props Tool"
 			return UVW[1]
 		)
 		
-		fn RenderUVW obj texsize render_path =
+		fn RenderUVW obj texsizeX texsizeY render_path =
 		(
 			--rendering uv template requires the mod panel to be active.
 			max modify mode
 			
-			local btmp = bitmap texsize texsize
+			local btmp = bitmap texsizeX texsizeY
 			
 			if obj != undefined then
 			(
@@ -167,8 +167,8 @@ tooltip:"Bake Props Tool"
 				--addmodifier tempLP uvmod
 				addmodifier obj uvmod
 				
-				uvmod.renderuv_width = texsize
-				uvmod.renderuv_height = texsize
+				uvmod.renderuv_width = texsizeX
+				uvmod.renderuv_height = texsizeY
 				
 				uvmod.renderuv_showframebuffer = false
 				uvmod.renderuv_showoverlap = false
@@ -198,7 +198,7 @@ tooltip:"Bake Props Tool"
 			
 		)
 
-		fn BakeProps obj texsize render_path =
+		fn BakeProps obj texsizeX texsizeY render_path =
 		(
 			local bp, bpp, df, ao, nm, mr, vfb, uvs, uvmod, tempLP
 			
@@ -243,7 +243,8 @@ tooltip:"Bake Props Tool"
 						bp.nDilations = 0
 						
 						df = DiffuseMap()
-						df.outputSzX = df.outputSzY = texsize
+						df.outputSzX = texsizeX
+						df.outputSzY = texsizeY
 						df.fileType = render_path + obj.name + "_DiffuseMask" + ".png"
 						df.fileName = render_path + obj.name + "_DiffuseMask" + ".png"
 						
@@ -251,7 +252,7 @@ tooltip:"Bake Props Tool"
 						
 						if (not bCancelled) do
 						(
-							vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize cancelled: &bCancelled
+							vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsizeX outputheight:texsizeY cancelled: &bCancelled
 						)
 						
 						if ro_BakeTool.chk_autoclosevfb.state then close vfb
@@ -267,7 +268,8 @@ tooltip:"Bake Props Tool"
 						
 						--Normals
 						nm = NormalsMap()
-						nm.outputSzX = nm.outputSzY = texsize
+						nm.outputSzX = texsizeX
+						nm.outputSzY = texsizeY
 						nm.fileType = render_path + obj.name + "_Normals" + ".png"
 						nm.fileName = render_path + obj.name + "_Normals" + ".png"
 
@@ -275,7 +277,7 @@ tooltip:"Bake Props Tool"
 
 						if (not bCancelled) do
 						(
-							vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize cancelled: &bCancelled
+							vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsizeX outputheight:texsizeY cancelled: &bCancelled
 						)
 						if ro_BakeTool.chk_autoclosevfb.state then close vfb
 					)
@@ -295,7 +297,8 @@ tooltip:"Bake Props Tool"
 						bp.nDilations = 2
 	
 						ao = Ambient_Occlusion()	
-						ao.outputSzX = ao.outputSzY = texsize
+						ao.outputSzX = texsizeX
+						ao.outputSzY = texsizeY
 						ao.fileType = render_path + obj.name + "_AO" + ".png"
 						ao.fileName = render_path + obj.name + "_AO" + ".png"
 						
@@ -309,7 +312,7 @@ tooltip:"Bake Props Tool"
 						obj.visibility = off
 						if (not bCancelled) do
 						(
-							vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize cancelled: &bCancelled
+							vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsizeX outputheight:texsizeY cancelled: &bCancelled
 						)
 						obj.visibility = on
 							
@@ -326,15 +329,6 @@ tooltip:"Bake Props Tool"
 		--UI EVENT HANDLERS--
 -------------------------------------------------	
 		
-		
-		
-		
-		
-		
-		
-		
-		
-		
 		on ro_BakeTool open do
 		(
 			InitCallBacks()
@@ -346,13 +340,17 @@ tooltip:"Bake Props Tool"
 				setINISetting iniFile  "Elements" "Diffuse" "true" 
 				setINISetting iniFile 	"Elements" "Normals" "true" 
 				setINISetting iniFile  "Elements" "AO" "true" 
-				setINISetting iniFile  "Elements" "UVW" "true" 
-				setINISetting iniFile  "Settings" "UVClipboard" "true" 
+				setINISetting iniFile  "Elements" "UVW" "true"
 				
-				
+				setINISetting iniFile  "Settings" "UVClipboard" "true" 	
 				setINISetting iniFile "Settings" "ShowVFB" "true"
 				setINISetting iniFile "Settings" "AutoCloseVFB" "true"
+				
 				setINISetting iniFile "Settings" "TexSize" "3"
+				setINISetting iniFile "Settings" "CustomSize" "false"
+				setINISetting iniFile "Settings" "CustomSizeX" "1"
+				setINISetting iniFile "Settings" "CustomSizeY" "1"
+				setINISetting iniFile "Settings" "FixedRatio" "true"
 						
 				setINISetting iniFile "Settings" "WinPosX" "0"
 				setINISetting iniFile "Settings" "WinPosY" "0"
@@ -373,10 +371,17 @@ tooltip:"Bake Props Tool"
 			ckb_Normal.checked = (getINISetting iniFile "Elements" "Normals") as BooleanClass
 			ckb_AO.checked = (getINISetting iniFile "Elements" "AO") as BooleanClass
 			ckb_UVW.checked = (getINISetting iniFile "Elements" "UVW") as BooleanClass
+			
 			ddl_textureSizes.selection = (getINISetting iniFile "Settings" "TexSize") as integer
 			chk_showvfb.checked = (getINISetting iniFile "Settings" "ShowVFB") as BooleanClass
 			chk_autoclosevfb.checked = (getINISetting iniFile "Settings" "AutoCloseVFB") as BooleanClass
 			chk_uvclipboard.checked = (getINISetting iniFile "Settings" "UVClipboard") as BooleanClass
+			
+			chk_customsize.checked = (getINISetting iniFile "Settings" "CustomSize") as BooleanClass
+			spn_xsize.value = (getINISetting iniFile "Settings" "CustomSizeX") as integer
+			spn_ysize.value = (getINISetting iniFile "Settings" "CustomSizeY") as integer
+			
+			chk_fixratio.checked = (getINISetting iniFile "Settings" "FixedRatio") as BooleanClass
 			
 			SetDialogPos ro_BakeTool [ (getINISetting iniFile "Settings" "WinPosX") as float , (getINISetting iniFile "Settings" "WinPosY") as float]
 			
@@ -393,6 +398,12 @@ tooltip:"Bake Props Tool"
 			setINISetting iniFile  "Settings" "UVClipboard" (chk_uvclipboard.checked as String)
 			
 			setINISetting iniFile "Settings" "TexSize" (ddl_textureSizes.selection as String)
+			setINISetting iniFile "Settings" "CustomSize" (chk_customsize.checked as String)
+			setINISetting iniFile "Settings" "CustomSizeX" (spn_xsize.value as String)
+			setINISetting iniFile "Settings" "CustomSizeY" (spn_ysize.value as String)
+					
+			setINISetting iniFile "Settings" "FixedRatio" (chk_fixratio.checked as String)
+			
 			setINISetting iniFile "Settings" "ShowVFB" (chk_showvfb.checked as String)
 			setINISetting iniFile "Settings" "AutoCloseVFB" (chk_autoclosevfb.checked as String)
 			
@@ -414,7 +425,28 @@ tooltip:"Bake Props Tool"
 			--------------------------------------------
 			-------- bake elements methods----------
 			----------------------------------------------
-					
+ 			local texsize, texsizeX, texsizeY
+			
+			if (chk_customsize.checked == true and chk_fixratio.checked == true) then
+			(
+				texsizeX = spn_xsize.value as integer
+				texsizeY = spn_ysize.value as integer
+			)
+			
+			if (chk_customsize.checked == true and chk_fixratio.checked == false) then
+			(
+				texsizeX = spn_xsize.value as integer
+				texsizeY = spn_ysize.value as integer
+			)
+			
+			if (chk_customsize.checked == false ) then
+			(
+				texsizeX = (ddl_textureSizes.selected as integer)
+				texsizeY = (ddl_textureSizes.selected as integer)
+			)
+			
+			
+			
 			-------------Scenario 1-------------------
 			if LP.count == 0 and selection.count == 0 then
 			(	
@@ -427,13 +459,7 @@ tooltip:"Bake Props Tool"
 				if GetProj selection[1] != undefined then
 				(
 					--messageBox ("Bake selection[activeSelection]")	
-					if chk_customsize.checked == true then
-					(
-						BakeProps selection[1] spn_xsize.value edt_Output.text
-					) else
-					(
-						BakeProps selection[1] (ddl_textureSizes.selected as integer) edt_Output.text
-					)
+					BakeProps selection[1] texsizeX texsizeY edt_Output.text
 					
 				)
 				else
@@ -442,7 +468,7 @@ tooltip:"Bake Props Tool"
 					if ( ckb_UVW.checked == true ) then
 					(
 						Print("No Projection Mod Found, render UVs only")
-						RenderUVW selection[1] (ddl_textureSizes.selected as integer) edt_Output.text
+						RenderUVW selection[1] texsizeX texsizeY edt_Output.text
 					)
 					else
 					(
@@ -459,14 +485,14 @@ tooltip:"Bake Props Tool"
 				if GetProj selection[1] != undefined then
 				(
 					--messageBox ("Bake selection[activeSelection_forceoveride] ")
-					BakeProps selection[1] (ddl_textureSizes.selected as integer) edt_Output.text
+					BakeProps selection[1] texsizeX texsizeY edt_Output.text
 				)
 				else
 				(
 					if ( ckb_UVW.checked == true ) then
 					(
 						print("No Projection Mod Found, render UVs only")
-						RenderUVW selection[1] (ddl_textureSizes.selected as integer) edt_Output.text
+						RenderUVW selection[1] texsizeX texsizeY edt_Output.text
 					)
 					else
 					(
@@ -484,14 +510,14 @@ tooltip:"Bake Props Tool"
 					--messageBox ("Bake marker: ")
 					select LP[1]
 					unhide LP[1]
-					BakeProps LP[1] (ddl_textureSizes.selected as integer) edt_Output.text
+					BakeProps LP[1] texsizeX texsizeY edt_Output.text
 				)
 				else
 				(
 					if ( ckb_UVW.checked == true ) then
 					(
 						print("No Projection Mod Found, render UVs only")
-						RenderUVW LP[1] (ddl_textureSizes.selected as integer) edt_Output.text
+						RenderUVW LP[1] texsizeX texsizeY edt_Output.text
 					)
 					else
 					(
@@ -510,14 +536,14 @@ tooltip:"Bake Props Tool"
 					--messageBox ("Bake marker: ")
 					select LP[1]
 					unhide LP[1]
-					BakeProps LP[1] (ddl_textureSizes.selected as integer) edt_Output.text
+					BakeProps LP[1] texsizeX texsizeY edt_Output.text
 				)
 				else
 				(
 					if ( ckb_UVW.checked == true ) then
 					(
 						print("No Projection Mod Found, render UVs only")
-						RenderUVW LP[1] (ddl_textureSizes.selected as integer) edt_Output.text
+						RenderUVW LP[1] texsizeX texsizeY edt_Output.text
 					)
 					else
 					(
@@ -538,7 +564,7 @@ tooltip:"Bake Props Tool"
 			if ckb_UVW.state == true then
 			(
 				print("No Projection Mod Found, render UVs only")
-				RenderUVW selection[1] (ddl_textureSizes.selected as integer) edt_Output.text
+				RenderUVW selection[1] texsizeX texsizeY edt_Output.text
 			)
 		)
 		on btn_OpenOutput pressed do
@@ -609,6 +635,15 @@ tooltip:"Bake Props Tool"
 			if chk_fixratio.checked == true then
 			(
 				spn_xsize.value = spn_ysize.value
+			)
+		)
+		
+		on chk_customsize changed state do
+		(
+			if chk_customsize.checked == false and chk_fixratio.checked == false then
+			(
+				chk_customsize.checked = true
+				chk_fixratio.checked = true
 			)
 		)
 		
