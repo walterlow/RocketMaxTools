@@ -2,6 +2,10 @@
 /*
 
 Changes:
+
+0.21:
+* cancel all renders if an element was cancelled
+
 0.2: 
 + uv copying
 + added AO sample options
@@ -32,7 +36,7 @@ tooltip:"Bake Props Tool"
 		local inipath = getdir #userscripts + "\\RocketMaxTools\\"
 		local iniFile = inipath + "BakeTools.ini"
 		local LP = #()
-		
+		local bCancelled = false
 		-------------------------------------------------
 		--UI Elements--
 		-------------------------------------------------	
@@ -236,8 +240,12 @@ tooltip:"Bake Props Tool"
 						df.fileName = render_path + obj.name + "_DiffuseMask" + ".png"
 						
 						bp.addBakeElement df
-					
-						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize
+						
+						if (not bCancelled) do
+						(
+							vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize cancelled: &bCancelled
+						)
+						
 						if ro_BakeTool.chk_autoclosevfb.state then close vfb
 					)
 					
@@ -257,7 +265,10 @@ tooltip:"Bake Props Tool"
 
 						bp.addBakeElement nm
 
-						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize
+						if (not bCancelled) do
+						(
+							vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize cancelled: &bCancelled
+						)
 						if ro_BakeTool.chk_autoclosevfb.state then close vfb
 					)
 					
@@ -288,7 +299,10 @@ tooltip:"Bake Props Tool"
 						bp.addBakeElement ao
 										
 						obj.visibility = off
-						vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize
+						if (not bCancelled) do
+						(
+							vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsize outputheight:texsize cancelled: &bCancelled
+						)
 						obj.visibility = on
 							
 						if ro_BakeTool.chk_autoclosevfb.state then close vfb
