@@ -28,7 +28,7 @@ tooltip:"Bake Props Tool"
 	
 	try (destroyDialog ro_BakeTool)catch()
 
-	rollout ro_BakeTool "RocketBakeTool 0.2" width:402 height:268
+	rollout ro_BakeTool "RocketBakeTool 0.2" width:406 height:268
 	(
 		
 		local fullpath
@@ -42,6 +42,7 @@ tooltip:"Bake Props Tool"
 		-------------------------------------------------	
 		
 		checkbutton ckb_Diffuse "Diffuse" pos:[88,154] width:78 height:28	
+	
 		checkbutton ckb_Normal "Normal" pos:[168,154] width:78 height:28
 		checkbutton ckb_AO "AO" pos:[248,154] width:56 height:28
 		checkbutton ckb_UVW "UVW" pos:[4,154] width:78 height:28
@@ -50,15 +51,21 @@ tooltip:"Bake Props Tool"
 		button btn_Bake "Bake It!" pos:[4,216] width:180 height:48
 		button btn_OpenOutput "Open Output" pos:[188,216] width:100 height:48
 		
-		dropdownList ddl_textureSizes "Texture Size:" pos:[244,48] width:64 height:40 items:#("128", "256", "512", "1024", "2048")
+		dropdownList ddl_textureSizes "Texture Size:" pos:[244,44] width:64 height:40 items:#("128", "256", "512", "1024", "2048")
+		
+		checkbox chk_fixratio "1:1" pos:[360,98] width:39 height:15
+		checkbox chk_customsize "Custom" pos:[344,40] width:59 height:15
+		spinner spn_xsize "Width:" pos:[330,60] width:70 height:16 range:[0,9999,256] type:#integer scale:1 fieldwidth:40
+		spinner spn_ysize "Height:" pos:[330,80] width:70 height:16 range:[0,9999,256] type:#integer scale:1 fieldwidth:40
+		
 		edittext edt_Output "" pos:[0,113] width:352 height:17
 		label lbl_Output "Output Folder: " pos:[8,97] width:136 height:16
 		
 		radiobuttons rdo_folder "" pos:[89,96] width:244 height:16 labels:#("Use default", "Use Custom Folder") default:1 columns:2
 -- 		button btn_setFolder "Set" pos:[356,114] width:40 height:24
 		
-		checkbox chk_showvfb "Show VFB" pos:[244,4] width:88 height:22
-		checkbox chk_autoclosevfb "Auto close VFB" pos:[244,24] width:92 height:22
+		checkbox chk_showvfb "Show VFB" pos:[244,2] width:88 height:22
+		checkbox chk_autoclosevfb "Auto close VFB" pos:[244,22] width:92 height:22
 		
 		button btn_SelectLowPoly "Select LP" pos:[4,32] width:76 height:24
 		label lbl_LowPoly "   " pos:[84,28] width:144 height:52 style_sunkenedge:true
@@ -67,6 +74,7 @@ tooltip:"Bake Props Tool"
 		
 		button btn_markLP "Mark LP" pos:[4,4] width:76 height:24
 		spinner spn_samples "Samples" pos:[330,156] width:70 height:16 range:[0,999,256] type:#integer scale:1 fieldwidth:40 
+ 
 		spinner spn_spread "Spread" pos:[330,176] width:70 height:16 range:[0,999,1.5] fieldwidth:40
 		spinner spn_maxdist "Max Dist" pos:[330,196] width:70 height:16 range:[0,999,0.3] fieldwidth:40
 		
@@ -318,6 +326,15 @@ tooltip:"Bake Props Tool"
 		--UI EVENT HANDLERS--
 -------------------------------------------------	
 		
+		
+		
+		
+		
+		
+		
+		
+		
+		
 		on ro_BakeTool open do
 		(
 			InitCallBacks()
@@ -364,7 +381,6 @@ tooltip:"Bake Props Tool"
 			SetDialogPos ro_BakeTool [ (getINISetting iniFile "Settings" "WinPosX") as float , (getINISetting iniFile "Settings" "WinPosY") as float]
 			
 		)
-		
 		on ro_BakeTool close do
 		(
 			
@@ -393,7 +409,6 @@ tooltip:"Bake Props Tool"
 			setINISetting iniFile "Settings" "WinPosY" (pos[2] as String)
 		
 		)
-		
 		on btn_Bake pressed do
 		(
 			--------------------------------------------
@@ -412,7 +427,14 @@ tooltip:"Bake Props Tool"
 				if GetProj selection[1] != undefined then
 				(
 					--messageBox ("Bake selection[activeSelection]")	
-					BakeProps selection[1] (ddl_textureSizes.selected as integer) edt_Output.text
+					if chk_customsize.checked == true then
+					(
+						BakeProps selection[1] spn_xsize.value edt_Output.text
+					) else
+					(
+						BakeProps selection[1] (ddl_textureSizes.selected as integer) edt_Output.text
+					)
+					
 				)
 				else
 				(
@@ -519,19 +541,16 @@ tooltip:"Bake Props Tool"
 				RenderUVW selection[1] (ddl_textureSizes.selected as integer) edt_Output.text
 			)
 		)
-		
 		on btn_OpenOutput pressed do
 		(
 			--print edt_Output.text
 			shellLaunch "explorer.exe" edt_Output.text
 		)
-		
 		on edt_Output entered txt do
 		(
 			if txt != "" then ( edt_Output.text = txt + "\\" )
 			rdo_folder.state = 2
 		)
-		
 		on rdo_folder changed state do
 		(
 			--default folder
@@ -556,20 +575,16 @@ tooltip:"Bake Props Tool"
 				else( rdo_folder.state=1 )
 			)
 		)
-		
-		
 		on btn_SelectLowPoly pressed do
 		(
 			if LP.count !=0 then ( select(LP[1]) )
 		)
-		
 		on btn_clear pressed do
 		(
 			LP = #()
 			lbl_lowPoly.caption = "  "
 			chk_rmblowpoly.checked = false
 		)
-		
 		on btn_markLP pressed do
 		(
 			if selection.count == 1 then
@@ -580,7 +595,24 @@ tooltip:"Bake Props Tool"
 				chk_rmblowpoly.checked = true
 			)		
 		)
-	) --end rollout
+		
+		on spn_xsize changed val do
+		(
+			if chk_fixratio.checked == true then
+			(
+				spn_ysize.value = spn_xsize.value
+			)
+		)
+		
+		on spn_ysize changed val do
+		(
+			if chk_fixratio.checked == true then
+			(
+				spn_xsize.value = spn_ysize.value
+			)
+		)
+		
+	)
 	
 createDialog ro_BakeTool
 	
