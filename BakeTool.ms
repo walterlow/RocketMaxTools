@@ -37,6 +37,7 @@ tooltip:"Bake Props Tool"
 		local iniFile = inipath + "BakeTools.ini"
 		local LP = #()
 		local bCancelled = false
+		local vfb
 		-------------------------------------------------
 		--UI Elements--
 		-------------------------------------------------	
@@ -253,6 +254,7 @@ tooltip:"Bake Props Tool"
 						if (not bCancelled) do
 						(
 							vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsizeX outputheight:texsizeY cancelled: &bCancelled
+							
 						)
 						
 						if ro_BakeTool.chk_autoclosevfb.state then close vfb
@@ -279,7 +281,8 @@ tooltip:"Bake Props Tool"
 						(
 							vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsizeX outputheight:texsizeY cancelled: &bCancelled
 						)
-						if ro_BakeTool.chk_autoclosevfb.state then close vfb
+						
+						if ro_BakeTool.chk_autoclosevfb.state and vfb != undefined then close vfb
 					)
 					
 					
@@ -313,14 +316,22 @@ tooltip:"Bake Props Tool"
 						if (not bCancelled) do
 						(
 							vfb = render renderType:#bakeSelected frame:#current vfb:ro_BakeTool.chk_showvfb.state progressBar:true outputwidth:texsizeX outputheight:texsizeY cancelled: &bCancelled
+							
 						)
+						
+						if ro_BakeTool.chk_autoclosevfb.state then close vfb
+							
 						obj.visibility = on
 							
-						if ro_BakeTool.chk_autoclosevfb.state then close vfb
+						
 					)
-				
+					
+					bCancelled = false
 				)
 			)
+			
+
+			
 			else( MessageBox("Select Something!") )
 		) --end fn
 
