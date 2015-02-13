@@ -182,7 +182,7 @@
 				main2uv.HighlightMultiplier = 0.1
 				
 				if (RMT.existFile (RMT.diffuseTex)) do (main2uv.TexDiffuse = openBitMap (RMT.diffuseTex) ) 
-				if (RMT.existFile (RMT.bumpTex)) do (main2uvTexBump = openBitMap (RMT.bumpTex) ) 
+				if (RMT.existFile (RMT.bumpTex)) do (main2uv.TexBump = openBitMap (RMT.bumpTex) ) 
 				if (RMT.existFile (RMT.lightmapTex)) do (main2uv.TexLightMap = openBitMap (RMT.lightmapTex) )
 					
 				meditMaterials[7] = main2uv
@@ -549,7 +549,7 @@
 			--Render
 			--render rendertype:#bakeSelected outputwidth:Xsize outputheight:Ysize outputfile:(fPath+fName+fType)
 			--render rendertype:#bakeSelected vfb:on progressBar:true outputSize:[2048,2048]
-			render renderType:#bakeSelected frame:#current vfb:true progressBar:true outputwidth:texsize outputheight:texsize
+			render renderType:#bakeSelected frame:#current vfb:true outputwidth:texsize outputheight:texsize
 		)
 		else( MessageBox("Select Something!") )
 	),
@@ -626,7 +626,7 @@
 				mr.MinimumSamples = 0
 				mr.MaximumSamples = 2
 				
-				render renderType:#bakeSelected frame:#current vfb:true progressBar:true outputwidth:texsize outputheight:texsize
+				render renderType:#bakeSelected frame:#current vfb:true outputwidth:texsize outputheight:texsize
 				------------------------
 								
 				------------------------
@@ -1697,6 +1697,7 @@
 		RMT.InitCallbacks()
 		
 		rf_MainFloater = newRolloutFloater "RocketMaxTools" 268 780
+		
 		rf_MainFloater.pos.x = (getINISetting RMT.settingsfile "General" "Window Pos X") as integer
 		rf_MainFloater.pos.y = (getINISetting RMT.settingsfile "General" "Window Pos Y") as integer
 
