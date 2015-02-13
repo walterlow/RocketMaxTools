@@ -3,6 +3,13 @@
 
 Changes:
 
+0.23:
++ Add custom padding option for diffuse mask
+
+
+0.22:
+*fixed script crash when cancelling a render
+
 0.21:
 * cancel all renders if an element was cancelled
 
@@ -28,7 +35,7 @@ tooltip:"Bake Props Tool"
 	
 	try (destroyDialog ro_BakeTool)catch()
 
-	rollout ro_BakeTool "RocketBakeTool 0.2" width:406 height:268
+	rollout ro_BakeTool "RocketBakeTool 0.23" width:406 height:268
 	(
 		
 		local fullpath
@@ -47,7 +54,8 @@ tooltip:"Bake Props Tool"
 		checkbutton ckb_Normal "Normal" pos:[168,154] width:78 height:28
 		checkbutton ckb_AO "AO" pos:[248,154] width:56 height:28
 		checkbutton ckb_UVW "UVW" pos:[4,154] width:78 height:28
-		checkbox chk_uvclipboard "Copy UV to clipboard" pos:[4,184] width:90 height:28
+		checkbox chk_uvclipboard "Copy UV to clipboard" pos:[4,184] width:84 height:28
+		spinner spn_diffpadding "Padding" pos:[88,184] width:80 height:4 range:[0,64,0] type:#integer scale:1 fieldwidth:20 tooltip:"Padding for Diffuse only"
 		
 		button btn_Bake "Bake It!" pos:[4,216] width:180 height:48
 		button btn_OpenOutput "Open Output" pos:[188,216] width:100 height:48
@@ -242,6 +250,7 @@ tooltip:"Bake Props Tool"
 
 						bp.removeAllBakeElements()
 						bp.nDilations = 0
+						bp.nDilations = spn_diffpadding.value
 						
 						df = DiffuseMap()
 						df.outputSzX = texsizeX

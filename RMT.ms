@@ -1,3 +1,18 @@
+--------------
+/*
+
+Changes:
+
+1.01:
++ reset ui position if settings file is not present.
+
+1.00:
+-
+
+Author: Walter Low
+*/
+---------------
+
 ( 
 	--Global UI vars
 	
@@ -1696,10 +1711,21 @@
 		
 		RMT.InitCallbacks()
 		
-		rf_MainFloater = newRolloutFloater "RocketMaxTools" 268 780
+		rf_MainFloater = newRolloutFloater "RocketMaxTools 1.01" 268 780
 		
-		rf_MainFloater.pos.x = (getINISetting RMT.settingsfile "General" "Window Pos X") as integer
-		rf_MainFloater.pos.y = (getINISetting RMT.settingsfile "General" "Window Pos Y") as integer
+		if RMT.settingsfile != undefined then
+		(
+			rf_MainFloater.pos.x = (getINISetting RMT.settingsfile "General" "Window Pos X") as integer
+			rf_MainFloater.pos.y = (getINISetting RMT.settingsfile "General" "Window Pos Y") as integer
+		)
+		else
+		(
+			
+			setINISetting RMT.settingsfile "General" "Window Pos X" "0"
+			setINISetting RMT.settingsfile "General" "Window Pos Y" "0"
+	
+			print ("Settings file not found.. Resetting position")
+		)
 
 		addRollout ro_Menu01 rf_MainFloater
 		addRollout ro_Menu02 rf_MainFloater
