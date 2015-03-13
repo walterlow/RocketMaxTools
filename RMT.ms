@@ -54,6 +54,7 @@ Author: Walter Low
 		speclevelTex,
 		glassSpeclevelTex,
 		bumpnormalTex,
+		bumpglassTex,
 		alphaTex,
 		bumpTex,
 		bump2Tex,
@@ -96,7 +97,8 @@ Author: Walter Low
 				RMT.speclevelTex = RMT.final_path + RMT.baseTexName + "-A" + "_S" + RMT.ext
 				RMT.glassSpeclevelTex = RMT.final_path + RMT.baseTexName + "-B" + "_S" + RMT.ext
 				RMT.bumpnormalTex = RMT.final_path + RMT.baseTexName + "-A" +"_N" + RMT.ext
-
+				RMT.bumpglassTex = RMT.final_path + RMT.baseTexName + "-B" +"_N" + RMT.ext
+				
 				RMT.alphaTex = RMT.final_path + RMT.baseTexName + "-B" + RMT.ext
 				RMT.bumpTex = RMT.final_path + RMT.baseTexName + "-C" + RMT.ext
 				RMT.bump2Tex = RMT.final_path + RMT.baseTexName + "-D" + RMT.ext
@@ -414,6 +416,9 @@ Author: Walter Low
 			meditMaterials[3].specularLevelMapEnable = on
 			meditMaterials[3].specularLevelMap = Bitmaptexture fileName: (RMT.glassSpeclevelTex)
 			
+			meditMaterials[3].bumpMapEnable = on
+			meditMaterials[3].bumpMap = Normal_Bump ()
+			meditMaterials[3].bumpMap.normal_map = Bitmaptexture fileName: (RMT.bumpglassTex)
 			meditMaterials[3].bumpMapAmount = 100
 		),
 		
@@ -1711,7 +1716,7 @@ Author: Walter Low
 		
 		RMT.InitCallbacks()
 		
-		rf_MainFloater = newRolloutFloater "RocketMaxTools 1.01" 268 780
+		rf_MainFloater = newRolloutFloater "RocketMaxTools 1.02" 268 780
 		
 		if RMT.settingsfile != undefined then
 		(
