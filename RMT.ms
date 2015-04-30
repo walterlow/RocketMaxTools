@@ -734,6 +734,8 @@ Author: Walter Low
 		(
 			for obj in objs do
 			(
+				addModifier obj (VertexPaint())
+				collapseStack obj
 				polyop.setVertColor obj 0 #{1..getNumVerts obj} [255,255,255]
 			)
 			format "vertex color set to white.\n"
@@ -747,7 +749,9 @@ Author: Walter Low
 		(
 			for obj in objs do
 			(
-			polyop.setVertColor obj 0 #{1..getNumVerts obj} [0,0,0]
+				addModifier obj (VertexPaint())
+				collapseStack obj
+				polyop.setVertColor obj 0 #{1..getNumVerts obj} [0,0,0]
 			)
 			format "vertex color set to black.\n"
 		)
@@ -851,13 +855,30 @@ Author: Walter Low
 	(
 		undo on
 		(
-			for obj in (selection) do
+			if keyboard.controlPressed then
 			(
-				resetXForm obj
-				convertToPoly obj
+				for obj in selection do 
+				(
+					ResetScale obj
+					ResetTransform obj
+					print("reseted scale n transform ")
+				)
+				
 			)
+			else
+			(
+				for obj in (selection) do
+				(
+					resetXForm obj
+					convertToPoly obj
+
+				)
+				print "Reseted XForms"
+			)
+
+			
 		)
-		print "Reseted XForms"
+		
 	),
 	
 	fn CenPivot = 
@@ -2294,7 +2315,7 @@ Author: Walter Low
 		
 		groupBox grp4 "Bake" pos:[4,168] width:254 height:44
 		button btn_bakeSelected "Bake Mains" pos:[8,184] width:72 height:22 toolTip:"Bake Selected Objects with presets to correct folders" across:3
-		dropdownList ddl_bakeSize "" pos:[80,184] width:50 height:21 items:#("128", "256", "512", "1024", "2048") selection:5
+		dropdownList ddl_bakeSize "" pos:[80,184] width:50 height:21 items:#("128", "256", "512", "1024", "2048", "4096") selection:5
 		checkbox chkbox_NR "Net Render" pos:[144,184] width:79 height:22 checked:false toolTip:"Enable Distributed Rendering."
 		
 		on btn_SetupMats pressed do
