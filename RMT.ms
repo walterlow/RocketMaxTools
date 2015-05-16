@@ -2,6 +2,11 @@
 /*
 
 Changes:
+1.03:
+Refactor create material functions
+Fixed new scene auto init code
+
+1.02:
 
 1.01:
 + reset ui position if settings file is not present.
@@ -169,257 +174,146 @@ Author: Walter Low
 			)
 		),
 		
-		fn existFile strFileName = ( (getfiles strFileName).count != 0 ), 
-		
-		fn setEffectFile mtlslot fxname =
+		fn existFile strFile = ( (getfiles strFile).count != 0 ), 
+
+
+		fn LoadBitmap input =
 		(
-			meditMaterials[mtlslot].effectfile =  RMT.shader_path + fxname
+			RMT.baseTexName = getFilenameFile maxFileName
+			local tex = RMT.final_path + RMT.baseTexName + input + RMT.ext
+			
+			if RMT.existFile tex then
+			(
+				return (openBitMap tex)
+			)
+			else
+			(
+				local bm = bitmap 512 512 filename:tex color:gray			
+				save bm
+				close bm
+				return (openBitMap bm.filename)
+			)
 		),
 		
+		fn LoadBitmapTexture input =
+		(
+			RMT.baseTexName = getFilenameFile maxFileName
+			local tex = RMT.final_path + RMT.baseTexName + input + RMT.ext
+			
+			if RMT.existFile tex then
+			(
+				 return (Bitmaptexture fileName: tex)
+			)
+			else
+			(
+				local bm = bitmap 512 512 filename:tex color:gray			
+				save bm
+				close bm
+				return (Bitmaptexture fileName: bm.filename)	
+			)
+		),
+		
+		fn createSTDMaterial matname slot TexDiffuse:"-A" TexSpec:"-A_S" TexBump:"-A_N" =
+		(
+			if sceneMaterials[matname] == undefined  then
+			(
+				format "\nCreating brand new % mat\n" matname
+				meditMaterials[slot] = StandardMaterial name:matname showInViewport:true
+				meditMaterials[slot].diffuseMapEnable = on
+				meditMaterials[slot].twoSided = on
+				meditMaterials[slot].diffuseMap = (LoadBitmapTexture TexDiffuse)
+
+				meditMaterials[slot].specularLevelMapEnable = on
+				meditMaterials[slot].specularLevelMap = (LoadBitmapTexture TexSpec)
+
+				meditMaterials[slot].bumpMapEnable = on
+				meditMaterials[slot].bumpMap = Normal_Bump ()
+				meditMaterials[slot].bumpMap.normal_map = (LoadBitmapTexture TexBump)
+				meditMaterials[slot].bumpMapAmount = 100
+			)
+			else
+			(
+				format "\nRetrieving % mat from scene...\n" matname
+				meditMaterials[slotnum] = sceneMaterials[matname]
+			)
+			
+		),
+
+
+		fn PopulateDXMaterial shaderfx 	TexDiffuse: "-A" TexBump: "-C" TexLightMap: "-E" \
+													Shininess: 30 BloodWallDepth: 2.5 BloodBlend: 1.75 ShadowFactor: 0.25 HighlightMultiplier: 0.1 \
+													BlendVal: 0.7 	Show_Transparency: 0.5 =						
+		(
+			
+			local shaderProps = getPropNames shaderfx
+			for prop in shaderProps do
+			(
+				case prop of
+				(
+					#TexDiffuse: shaderfx.TexDiffuse = 							(LoadBitmap TexDiffuse)
+					#TexBump: shaderfx.TexBump = 								(LoadBitmap TexBump)
+					#TexLightMap: shaderfx.TexLightMap = 						(LoadBitmap TexLightMap)
+					#Shininess: shaderfx.Shininess = 								Shininess
+					#BloodWallDepth: shaderfx.BloodWallDepth = 				BloodWallDepth
+					#BloodBlend: shaderfx.BloodBlend = 							BloodBlend
+					#ShadowFactor: shaderfx.ShadowFactor = 					ShadowFactor
+					#HighlightMultiplier: shaderfx.HighlightMultiplier = 			HighlightMultiplier
+					#Blend: shaderfx.Blend = 											BlendVal
+					#Show_Transparency: shaderfx.Show_Transparency = 	Show_Transparency
+				)
+			)	
+		),
+
+
+		fn createDXMaterial matname slotnum effectFile TexDiffuse:"-A" TexBump:"-C" =
+		(
+			if sceneMaterials[matname] == undefined  then
+			(
+				format "\nCreating brand new % mat\n" matname
+				sceneMaterials[matname] = DxMaterial ()
+				sceneMaterials[matname].effectfile = RMT.shader_path + effectFile		
+				PopulateDXMaterial sceneMaterials[matname] TexDiffuse:TexDiffuse TexBump:TexBump
+				meditMaterials[slotnum] = sceneMaterials[matname]
+			)
+			else
+			(
+				format "\nRetrieving % mat from scene...\n" matname
+				medit.PutMtlToMtlEditor sceneMaterials[matname] meditMaterials[slotnum]
+			)
+			
+		),
+
 		fn SetupMats =
 		(
 			--reinit png paths
-			RMT.InitTextures()
+			--RMT.InitTextures()
 			
-  			try(
-			---------------------- FX materials --------------------------
-			macros.run "Medit Tools" "clear_medit_slots"
-			
-			if sceneMaterials["Main_2UV"] == undefined  then
+  			try
 			(
-				local main2uv = DxMaterial ()
-				main2uv.name = "Main_2UV"  --eg, Simple_2UV
-				main2uv.effectfile = RMT.shader_path + "simple-2uv.fx"
-				main2uv.technique = 0
-				main2uv.renderMaterial = StandardMaterial name:"simple-2uv_renderstyle"
-				main2uv.Shininess = 30
-				main2uv.BloodWallDepth = 2.5
-				main2uv.BloodBlend = 1.75
-				main2uv.ShadowFactor = 0.25
-				main2uv.HighlightMultiplier = 0.1
-				
-				if (RMT.existFile (RMT.diffuseTex)) do (main2uv.TexDiffuse = openBitMap (RMT.diffuseTex) ) 
-				if (RMT.existFile (RMT.bumpTex)) do (main2uv.TexBump = openBitMap (RMT.bumpTex) ) 
-				if (RMT.existFile (RMT.lightmapTex)) do (main2uv.TexLightMap = openBitMap (RMT.lightmapTex) )
-					
-				meditMaterials[7] = main2uv
 
-			)
-			else ( meditMaterials[7] = sceneMaterials["Main_2UV"] )
-			
-			if sceneMaterials["Simple"] == undefined then
-			(
-				local simple = DxMaterial ()
-				simple.name = "Simple"  --eg, Simple_2UV
-				 
-				simple.effectfile = RMT.shader_path + "simple.fx"
-				simple.technique = 0
-				simple.renderMaterial = StandardMaterial name:"simple_renderstyle"
+				macros.run "Medit Tools" "clear_medit_slots"
 				
-				if (RMT.existFile  (RMT.diffuseTex)) do (simple.TexDiffuse = openBitMap (RMT.diffuseTex) ) 
-					
-				meditMaterials[8] = simple
-			)
-			else ( meditMaterials[8] = sceneMaterials["Simple"]   )
+				---------------------- FX materials --------------------------
+				createDXMaterial "Main_2UV" 7  "simple-2uv.fx" TexDiffuse:"-A" TexBump:"-C"
+				createDXMaterial "Simple" 8  "simple.fx" TexDiffuse:"-A"
+				createDXMaterial "Silhouette" 9  "silhouette.fx" TexDiffuse:"-F"
+				createDXMaterial "Black" 10  "black.fx"
+				createDXMaterial "Alpha" 11  "simple-alpha.fx" TexDiffuse:"-G"
+				createDXMaterial "Alpha_2UV" 12  "simple-alpha-2uv.fx" TexDiffuse:"-B" TexBump:"-D"
+				createDXMaterial "Multiply" 13  "simple-multiply.fx" TexDiffuse:"-G"
+				createDXMaterial "SimpleCastShadow_2UV" 14  "simple-2uv-castshadow.fx" TexDiffuse:"-A" TexBump:"-C"
+				createDXMaterial "BreakableAlpha" 15  "simple-multiply.fx" TexDiffuse:"-A"
+				createDXMaterial "Chicken" 16  "character-background.fx" TexDiffuse:"-A" TexBump:"-C"
+				createDXMaterial "Stars" 17  "simple-alpha.fx" TexDiffuse:"-B"
+				createDXMaterial "Terminator" 18  "simple-alpha.fx" TexDiffuse:"-B"
 				
-			
-	 		if sceneMaterials["SimpleCastShadow_2UV"] == undefined then
-			(
-				local SimpleCastShadow2uv = DxMaterial ()
-				SimpleCastShadow2uv.name = "SimpleCastShadow_2UV"  --eg, Simple_2UV
-				SimpleCastShadow2uv.effectfile = RMT.shader_path + "simple-2uv-castshadow.fx"
-				SimpleCastShadow2uv.technique = 0
-				SimpleCastShadow2uv.renderMaterial = StandardMaterial name:"simple_renderstyle"
-				SimpleCastShadow2uv.Shininess = 30
-				SimpleCastShadow2uv.BloodWallDepth = 2.5
-				SimpleCastShadow2uv.BloodBlend = 1.75
-				SimpleCastShadow2uv.ShadowFactor = 0.25
-				SimpleCastShadow2uv.HighlightMultiplier = 0.1
-					
-				if (RMT.existFile (RMT.diffuseTex)) do (SimpleCastShadow2uv.TexDiffuse = openBitMap (RMT.diffuseTex) ) 
-				if (RMT.existFile (RMT.bumpTex)) do (SimpleCastShadow2uv.TexBump = openBitMap (RMT.bumpTex) ) 
-				if (RMT.existFile (RMT.lightmapTex)) do (SimpleCastShadow2uv.TexLightMap = openBitMap (RMT.lightmapTex) ) 
-					
-				meditMaterials[14] = SimpleCastShadow2uv
-			)
-			 else ( meditMaterials[14] = sceneMaterials["SimpleCastShadow_2UV"]  ) 
-			
-			if sceneMaterials["Silhouette"] == undefined then
-			(
-				local Silhouette = DxMaterial ()
-				Silhouette.name = "Silhouette"  --eg, Simple_2UV
-				Silhouette.effectfile = RMT.shader_path + "silhouette.fx"
-				Silhouette.technique = 0
-				Silhouette.renderMaterial = StandardMaterial name:"silhouette_renderstyle"
-				
-				if (RMT.existFile (RMT.silhouetteTex)) do (Silhouette.TexDiffuse = openBitMap (RMT.silhouetteTex) ) 
-					
-				meditMaterials[9] = Silhouette
-			)
-			 else ( meditMaterials[9] = sceneMaterials["Silhouette"] )
-				
-			if sceneMaterials["Black"] == undefined then
-			(
-				local blackfx = DxMaterial ()
-				blackfx.name = "Black"  --eg, Simple_2UV
-				blackfx.effectfile = RMT.shader_path + "black.fx"
-				blackfx.technique = 0
-				blackfx.renderMaterial = StandardMaterial name:"black_renderstyle"
-				
-				meditMaterials[10] = blackfx
-			)
-			 else ( meditMaterials[10] = sceneMaterials["Black"] )
-				
-			if sceneMaterials["Alpha"] == undefined then
-			(
-				local alphafx = DxMaterial ()
-				alphafx.name = "Alpha"  --eg, Simple_2UV
-				alphafx.effectfile = RMT.shader_path + "simple-alpha.fx"
-				alphafx.technique = 0
-				alphafx.renderMaterial = StandardMaterial name:"simple-alpha_renderstyle"
-				alphafx.Blend = 0.7
-				alphafx.Show_Transparency = 0.5
-				
-				if (RMT.existFile (RMT.decalTex)) do (alphafx.TexDiffuse = openBitMap (RMT.decalTex) ) 
-				
-				meditMaterials[11] = alphafx
-			)
-			 else ( meditMaterials[11] = sceneMaterials["Alpha"] )
+				---------------------- Standard materials --------------------------
+				createSTDMaterial "Main" 1
+				createSTDMaterial "Glass" 3 TexDiffuse:"-B" TexSpec:"-B_S" TexBump:"-B_N"
 
-		 	if sceneMaterials["Alpha_2UV"] == undefined then
-			(
-				local alpha2uv = DxMaterial ()
-				alpha2uv.name = "Alpha_2UV"  --eg, Simple_2UV
-				alpha2uv.effectfile = RMT.shader_path + "simple-alpha-2uv.fx"
-				alpha2uv.technique = 0
-				alpha2uv.renderMaterial = StandardMaterial name:"simple-alpha-2uv_renderstyle"
-				alpha2uv.Shininess = 30
-				alpha2uv.BloodWallDepth = 2.5
-				alpha2uv.BloodBlend = 1.75
-				alpha2uv.ShadowFactor = 0.25
-				alpha2uv.HighlightMultiplier = 0.1
-				
-				if (RMT.existFile (RMT.alphaTex)) do (alpha2uv.TexDiffuse = openBitMap (RMT.alphaTex) ) 
-				if (RMT.existFile (RMT.bump2Tex)) do (alpha2uv.TexBump = openBitMap (RMT.bump2Tex) ) 
-				if (RMT.existFile (RMT.lightmapTex)) do (alpha2uv.TexLightMap = openBitMap (RMT.lightmapTex) ) 
-					
-				meditMaterials[12] = alpha2uv
-					
-			)
-			 else ( meditMaterials[12] = sceneMaterials["Alpha_2UV"] ) 
-				
-		 	if sceneMaterials["Multiply"] == undefined then
-			(
-				local multiplyfx = DxMaterial ()
-				multiplyfx.name = "Multiply"  --eg, Simple_2UV
-				multiplyfx.effectfile =  RMT.shader_path + "simple-multiply.fx"
-				multiplyfx.technique = 0
-				multiplyfx.renderMaterial = StandardMaterial name:"simple-multiply_renderstyle"
-				multiplyfx.Blend = 1
-				
-				if (RMT.existFile (RMT.decalTex)) do (multiplyfx.TexDiffuse = openBitMap (RMT.decalTex) ) 
-
-				meditMaterials[13] = multiplyfx
-			)
-			 else ( meditMaterials[13] = sceneMaterials["Multiply"] ) 
+			) --end try
 			
-			
-			if sceneMaterials["BreakableAlpha"] == undefined then
-			(
-				local breakablealpha = DxMaterial ()
-				breakablealpha.name = "BreakableAlpha"  --eg, Simple_2UV
-				breakablealpha.effectfile = (RMT.shader_path + "simple-multiply.fx")
-				breakablealpha.technique = 0
-				breakablealpha.renderMaterial = StandardMaterial name:"simple-multiply_renderstyle"
-				breakablealpha.Blend = 1
-				
-				if (RMT.existFile (RMT.diffuseTex)) do (breakablealpha.TexDiffuse = openBitMap (RMT.diffuseTex) ) 
-					
-				meditMaterials[15] = breakablealpha
-			)
-			 else ( meditMaterials[15] = sceneMaterials["BreakableAlpha"] )
-			
-			if sceneMaterials["Chicken"] == undefined then
-			(
-				local chickenfx = DxMaterial ()
-				chickenfx.name = "Chicken"
-				chickenfx.effectfile = RMT.shader_path + "character-background.fx"
-				chickenfx.technique = 0
-				chickenfx.renderMaterial = StandardMaterial name:"character-background_renderstyle"
-				chickenfx.Shininess = 30
-				
-				if (RMT.existFile (RMT.diffuseTex)) do (chickenfx.TexDiffuse = openBitMap (RMT.diffuseTex) ) 
-				if (RMT.existFile (RMT.bumpTex)) do (chickenfx.TexBump = openBitMap (RMT.bumpTex) ) 
-					
-				meditMaterials[16] = chickenfx
-			)
-			 else ( meditMaterials[16] = sceneMaterials["Chicken"] )
-			
-			if sceneMaterials["Stars"] == undefined  then
-			(
-				local starsfx = DxMaterial ()
-				starsfx.name = "Stars"  --eg, Simple_2UV
-				starsfx.effectfile = RMT.shader_path + "simple-alpha.fx"
-				starsfx.technique = 0
-				starsfx.renderMaterial = StandardMaterial name:"simple-alpha_renderstyle"
-				starsfx.Blend = 1
-				starsfx.Show_Transparency = 1
-				
-				if (RMT.existFile (alphaTex)) do (starsfx.TexDiffuse = openBitMap (RMT.alphaTex) ) 
-					
-				meditMaterials[17] = starsfx
-			)
-			 else ( meditMaterials[17] = sceneMaterials["Stars"] )
-			
-			
-			if sceneMaterials["Terminator"] == undefined then
-			(
-				local terminatorfx = DxMaterial () 
-				terminatorfx.name = "Terminator"  --eg, Simple_2UV
-				terminatorfx.effectfile = RMT.shader_path + "simple-alpha.fx"
-				terminatorfx.technique = 0
-				terminatorfx.renderMaterial = StandardMaterial name:"simple-alpha_renderstyle"
-				terminatorfx.Blend = 1
-				terminatorfx.Show_Transparency = 1		
-				
-				if (RMT.existFile (RMT.alphaTex)) do (terminatorfx.TexDiffuse = openBitMap (RMT.alphaTex) ) 
-					
-				meditMaterials[18] = terminatorfx
-				)
-				 else ( meditMaterials[18] = sceneMaterials["Terminator"]  )
-			
-		) --end try
-  		catch( messagebox "Script Error: Please restart max or contact Walter. ;)")
-
-			---------------------- Non-FX materials --------------------------
-			
-			meditMaterials[1] = StandardMaterial name:"Main" showInViewport:true
-			meditMaterials[1].diffuseMapEnable = on
-			meditMaterials[1].twoSided = on
-			meditMaterials[1].diffuseMap = Bitmaptexture fileName:  (RMT.diffuseTex)
-
-			meditMaterials[1].specularLevelMapEnable = on
-			meditMaterials[1].specularLevelMap = Bitmaptexture fileName: (RMT.speclevelTex)
-			
-			meditMaterials[1].bumpMapEnable = on
-			meditMaterials[1].bumpMap = Normal_Bump ()
-			meditMaterials[1].bumpMap.normal_map = Bitmaptexture fileName: (RMT.bumpnormalTex)
-			meditMaterials[1].bumpMapAmount = 100
-			
-			------
-			
-			meditMaterials[3] = StandardMaterial name:"Glass" showInViewport:true
-			meditMaterials[3].diffuseMapEnable = on
-			meditMaterials[3].twoSided = on
-			meditMaterials[3].diffuseMap = Bitmaptexture fileName:  (RMT.alphaTex)
-			
-			meditMaterials[3].specularLevelMapEnable = on
-			meditMaterials[3].specularLevelMap = Bitmaptexture fileName: (RMT.glassSpeclevelTex)
-			
-			meditMaterials[3].bumpMapEnable = on
-			meditMaterials[3].bumpMap = Normal_Bump ()
-			meditMaterials[3].bumpMap.normal_map = Bitmaptexture fileName: (RMT.bumpglassTex)
-			meditMaterials[3].bumpMapAmount = 100
+			catch( messagebox "Script Error: Please restart max or contact Walter. ;) ")
 		),
 		
 		fn CleanMats =
@@ -467,25 +361,6 @@ Author: Walter Low
 			RMT.mrRender.MaximumRefractions = 1
 			
 			
-			------------------------draft------------------------------
-			
--- 			--FG BASICS
--- 			RMT.mrRender.FinalGatherEnable2 = true 
--- 			RMT.mrRender.FinalGatherDensity = 0.1
--- 			RMT.mrRender.FinalGatherAccuracy = 50
--- 			RMT.mrRender.FinalGatherBounces = 0
--- 			
--- 			--FG INTERPOLATION
--- 			RMT.mrRender.FinalGatherUseRadiusInterpolation = false
--- 			RMT.mrRender.FinalGatherView = false
--- 			RMT.mrRender.UseFinalGatherRadius = false
--- 			RMT.mrRender.UseFinalGatherMinRadius = false
--- 			RMT.mrRender.FinalGatherRadius = 1
--- 			RMT.mrRender.FinalGatherMinRadius = 1
--- 			
--- 			RMT.mrRender.MaximumReflections = 1
--- 			RMT.mrRender.MaximumRefractions = 1
-	
 			print ("MentalRay FG Settings Loaded")
 		),
 		
@@ -1616,10 +1491,9 @@ Author: Walter Low
 		)
 	),
 	
-	fn SemiAutoSetup =
+	fn ImportLevel =
 	(
 		local importedFile, tokens, fileTitle
-	
 		importedFile = getOpenFileName "Import RocketEd dae" filename:"C:\\Projects\\Cow2\\Assets\\Screens\\" types: "OpenCollada(*.dae)|*.dae|"
 
 		if importedFile != undefined then
@@ -1694,7 +1568,7 @@ Author: Walter Low
 				RMT.assignOthersMatID()
 				RMT.SetupMats()
 				RMT.SetupFG()
-				$*.material = meditmaterials[1]
+				$*.material = sceneMaterials["Main"]
 				RMT.createBouncer()
 				RMT.sendtoLayer $Bouncer "Bouncer"
 				clearSelection()
@@ -1704,8 +1578,7 @@ Author: Walter Low
 				(
 					if matchpattern o.name pattern: "*Silhouette*" then
 					(
-						--o.material = sceneMaterials["Silhouette"]
-						o.material = meditmaterials[9]
+						o.material = sceneMaterials["Silhouette"]
 						RMT.sendtoLayerByName o.name "Silhouette"
 						format "found: %" o.name
 					)
@@ -1724,6 +1597,15 @@ Author: Walter Low
 			)
 			
 		) --end 1st if
+	),
+	
+	fn SemiAutoSetup =
+	(
+-- 		if (getSaveRequired() ) then
+-- 		(
+-- 			getMAXSaveFileName()
+-- 		)
+		ImportLevel()
 	),
 	
 	fn BuildRun =
@@ -1778,16 +1660,7 @@ Author: Walter Low
 	
 		RMT.DestroyCallbacks()
 
-		--TODO: consider removing
-		
--- 		if rf_MainFloater !=undefined then closeRolloutFloater rf_MainFloater
--- 		if ro_doorHelper !=undefined then destroyDialog ro_doorHelper
--- 		if ro_TransferUV !=undefined then destroyDialog ro_TransferUV
--- 		if ro_doorHelper2 !=undefined then destroyDialog ro_doorHelper2
--- 		if ro_animHelper !=undefined then destroyDialog ro_animHelper
--- 			
-		
-	) -- 
+	)
 
 	) -- end RMT struct
 
