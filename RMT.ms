@@ -176,7 +176,14 @@ Author: Walter Low
 		
 		fn existFile strFile = ( (getfiles strFile).count != 0 ), 
 
-
+		fn createBitmap sFile width:512 height:512 col:gray =
+		(
+			local b = bitmap width height filename:sFile color:col
+			save b
+			close b
+ 			return b
+		),
+		
 		fn LoadBitmap input =
 		(
 			RMT.baseTexName = getFilenameFile maxFileName
@@ -188,13 +195,11 @@ Author: Walter Low
 			)
 			else
 			(
-				local bm = bitmap 512 512 filename:tex color:gray			
-				save bm
-				close bm
+				local bm = createBitmap tex
 				return (openBitMap bm.filename)
 			)
 		),
-		
+				
 		fn LoadBitmapTexture input =
 		(
 			RMT.baseTexName = getFilenameFile maxFileName
@@ -206,9 +211,7 @@ Author: Walter Low
 			)
 			else
 			(
-				local bm = bitmap 512 512 filename:tex color:gray			
-				save bm
-				close bm
+				local bm = createBitmap tex
 				return (Bitmaptexture fileName: bm.filename)	
 			)
 		),
