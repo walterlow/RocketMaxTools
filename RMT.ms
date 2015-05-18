@@ -239,41 +239,60 @@ Author: Walter Low
 			
 		),
 
-
-		fn PopulateDXMaterial shaderfx 	TexDiffuse: "-A" TexBump: "-C" TexLightMap: "-E" \
-													Shininess: 30 BloodWallDepth: 2.5 BloodBlend: 1.75 ShadowFactor: 0.25 HighlightMultiplier: 0.1 \
-													BlendVal: 0.7 	Show_Transparency: 0.5 =						
-		(
-			
-			local shaderProps = getPropNames shaderfx
-			for prop in shaderProps do
-			(
-				case prop of
-				(
-					#TexDiffuse: shaderfx.TexDiffuse = 							(LoadBitmap TexDiffuse)
-					#TexBump: shaderfx.TexBump = 								(LoadBitmap TexBump)
-					#TexLightMap: shaderfx.TexLightMap = 						(LoadBitmap TexLightMap)
-					#Shininess: shaderfx.Shininess = 								Shininess
-					#BloodWallDepth: shaderfx.BloodWallDepth = 				BloodWallDepth
-					#BloodBlend: shaderfx.BloodBlend = 							BloodBlend
-					#ShadowFactor: shaderfx.ShadowFactor = 					ShadowFactor
-					#HighlightMultiplier: shaderfx.HighlightMultiplier = 			HighlightMultiplier
-					#Blend: shaderfx.Blend = 											BlendVal
-					#Show_Transparency: shaderfx.Show_Transparency = 	Show_Transparency
-				)
-			)	
-		),
-
-
-		fn createDXMaterial matname slotnum effectFile TexDiffuse:"-A" TexBump:"-C" =
+		fn createDXMaterial matname slotnum effectFile \
+									TexDiffuse: "-A" TexBump: "-C" TexLightMap: "-E" \
+									Shininess: 30 BloodWallDepth: 2.5 BloodBlend: 1.75 ShadowFactor: 0.25 HighlightMultiplier: 0.1 \
+									BlendVal: 0.7 	Show_Transparency: 0.5 FlipSpeed:10.0 \
+									FlipBlend:150.0 NumFramesX:8.0 NumFramesY:1.0 \
+									FrameWidth:128 FrameHeight:128 ImageWidth:2048 ImageHeight:2048 \
+									Current_Tim_e:0 timeoffset:0 ScrollOffset:0 ScrollSpeed:0.1 cloudTime:0 \	
+									=
 		(
 			if sceneMaterials[matname] == undefined  then
 			(
 				format "\nCreating brand new % mat\n" matname
-				sceneMaterials[matname] = DxMaterial ()
-				sceneMaterials[matname].effectfile = RMT.shader_path + effectFile		
-				PopulateDXMaterial sceneMaterials[matname] TexDiffuse:TexDiffuse TexBump:TexBump
-				meditMaterials[slotnum] = sceneMaterials[matname]
+				local shaderfx = sceneMaterials[matname] 
+
+				shaderfx = DxMaterial ()
+ 				shaderfx.name = matname
+				
+				--load .fx file before looping through fx properties
+				shaderfx.effectfile = RMT.shader_path + effectFile		
+				
+				local shaderProps = getPropNames shaderfx
+				for prop in shaderProps do
+				(
+					case prop of
+					(
+						#TexDiffuse: shaderfx.TexDiffuse = 							(LoadBitmap TexDiffuse)
+						#TexBump: shaderfx.TexBump = 								(LoadBitmap TexBump)
+						#TexLightMap: shaderfx.TexLightMap = 						(LoadBitmap TexLightMap)
+						#Shininess: shaderfx.Shininess = 								Shininess
+						#BloodWallDepth: shaderfx.BloodWallDepth = 				BloodWallDepth
+						#BloodBlend: shaderfx.BloodBlend = 							BloodBlend
+						#ShadowFactor: shaderfx.ShadowFactor = 					ShadowFactor
+						#HighlightMultiplier: shaderfx.HighlightMultiplier = 			HighlightMultiplier
+						#Blend: shaderfx.Blend = 											BlendVal
+						#Show_Transparency: shaderfx.Show_Transparency = 	Show_Transparency
+						--additional props from flipbook-addictive shader
+						#FlipSpeed: shaderfx.FlipSpeed = 								FlipSpeed
+						#FlipBlend: shaderfx.FlipBlend =									FlipBlend
+						#NumFramesX: shaderfx.NumFramesX =						NumFramesX
+						#NumFramesY: shaderfx.NumFramesY =						NumFramesY
+						#FrameWidth: shaderfx.FrameWidth =							FrameWidth
+						#FrameHeight: shaderfx.FrameHeight =						FrameHeight
+						#ImageWidth: shaderfx.ImageWidth =							ImageWidth
+						#ImageHeight: shaderfx.ImageHeight = 						ImageHeight
+						#Current_Tim_e: shaderfx.Current_Tim_e = 					Current_Tim_e
+						#timeoffset: shaderfx.timeoffset =								timeoffset
+						--additional props from cloud shader
+						#ScrollOffset: shaderfx.ScrollOffset = 							ScrollOffset
+						#ScrollSpeed: shaderfx.ScrollSpeed =							ScrollSpeed
+						#time: shaderfx.time =												cloudTime
+					)
+				)	
+				
+				meditMaterials[slotnum] = shaderfx
 			)
 			else
 			(
@@ -306,7 +325,11 @@ Author: Walter Low
 				createDXMaterial "Chicken" 16  "character-background.fx" TexDiffuse:"-A" TexBump:"-C"
 				createDXMaterial "Stars" 17  "simple-alpha.fx" TexDiffuse:"-B"
 				createDXMaterial "Terminator" 18  "simple-alpha.fx" TexDiffuse:"-B"
-				
+				createDXMaterial "Multiply2" 19 "simple-multiply.fx" TexDiffuse:"-G" BlendVal:0.5
+				createDXMaterial "FlipBook1" 20 "flipbook-additive.fx" TexDiffuse:"-G" BlendVal:0.9
+				createDXMaterial "FlipBook2" 21 "flipbook-additive.fx" TexDiffuse:"-G" BlendVal:0.7
+				createDXMaterial "Cloud1" 22 "cloud.fx" TexDiffuse:"-G" ScrollSpeed:0.08
+				createDXMaterial "Cloud2" 23 "cloud.fx" TexDiffuse:"-G" ScrollSpeed:0.04
 				---------------------- Standard materials --------------------------
 				createSTDMaterial "Main" 1
 				createSTDMaterial "Glass" 3 TexDiffuse:"-B" TexSpec:"-B_S" TexBump:"-B_N"
