@@ -569,7 +569,7 @@ Author: Walter Low
 		)
 		else( MessageBox("Select Something!") )
 	),
-	--RMT.BakeProps $ 512
+	
 	
 	fn saveCurrentFinal =
 	(
@@ -1549,7 +1549,7 @@ Author: Walter Low
 				RMT.assignOthersMatID()
 				RMT.SetupMats()
 				RMT.SetupFG()
-				$*.material = meditmaterials[1]
+				$*.material = sceneMaterials["Main"]
 				RMT.createBouncer()
 				RMT.sendtoLayer $Bouncer "Bouncer"
 				clearSelection()
