@@ -24,11 +24,12 @@ tooltip:"StereoCam"
 	
 	fn createMainCam = 
 	(
+		local targetDist = 10
 		local MainCam = Freecamera name:"Cam_Main" wirecolor: white
 		MainCam.orthoProjection = true
 		MainCam.rotation = (angleaxis 90 [1,0,0])
-		MainCam.position = [0,-10,5]
-		MainCam.baseObject.targetDistance = 10
+		MainCam.position = [0, -targetDist, 5]
+		MainCam.baseObject.targetDistance = targetDist
 		MainCam.fov = GetFOVFromLens 35
 	)
 	
@@ -72,7 +73,8 @@ tooltip:"StereoCam"
 		progressBar progBar "" pos:[15,344] width:200 height:16 
  
 		button btn_selectCtrl "Select CamCtrl" pos:[12,160] width:85 height:21
-		spinner spn_FOV "FOV:" pos:[28,190] width:96 height:16 range:[1,1000, GetFOVFromLens 35]
+		button btn_selectMainCam "Select MainCam" pos:[100,160] width:85 height:21
+		spinner spn_FOV "FOV:" pos:[44,190] width:96 height:16 range:[1,1000, GetFOVFromLens 35]
 		spinner spn_horizontalAxis "Horizontal:" pos:[34,212] width:139 height:16 range:[-1000,1000,0]
 		spinner spn_verticalAxis "Vertical:" pos:[34,232] width:139 height:16 range:[-1000,1000,0]
 		spinner spn_pan "Pan:" pos:[34,252] width:139 height:16 range:[-1000,1000,0]
@@ -111,9 +113,9 @@ tooltip:"StereoCam"
 			camDist = spn_camDist.value
 		
 			--local axis
-			CamLeft = copy MyCamera name:"Cam_StereoLeft" wirecolor: red
+			CamLeft = instance MyCamera name:"Cam_StereoLeft" wirecolor: red
 			in coordsys local (CamLeft.position.x -= camDist)
-			CamRight = copy MyCamera name:"Cam_StereoRight" wirecolor: blue
+			CamRight = instance MyCamera name:"Cam_StereoRight" wirecolor: blue
 			in coordsys local (CamRight.position.x += camDist)
 			
 			SetupCameraController()
@@ -146,7 +148,7 @@ tooltip:"StereoCam"
 			
 			if (not (doesfileExist fPath) ) then ( MAKEDir fPath)
 			
-			windows.processPostedMessages()
+			
 			for i = fstart to fend do 
 			(
 				if (not bCancelled) do
@@ -160,11 +162,11 @@ tooltip:"StereoCam"
 					leftbitmap = bitmap spn_frameWidth.value spn_frameHeight.value
 					render camera:CamLeft outputwidth:spn_frameWidth.value outputheight:spn_frameHeight.value  vfb:false to:leftbitmap cancelled: &bCancelled
 						
-					
+					windows.processPostedMessages()
 					fName = fPath + edt_shotname.text  + "-" + fCount + "-" + "Right" + ddl_ext.selected
 					rightbitmap = bitmap spn_frameWidth.value spn_frameHeight.value
 					render camera:CamRight outputwidth:spn_frameWidth.value outputheight:spn_frameHeight.value  vfb:false to:rightbitmap  cancelled: &bCancelled 
-					
+					windows.processPostedMessages()
 					
 					--Combine images here
 					finalbitmap = bitmap (spn_frameWidth.value * 2) spn_frameHeight.value filename: (fPath + edt_shotname.text + "-" + fCount + ddl_ext.selected)
@@ -203,6 +205,10 @@ tooltip:"StereoCam"
 		(
 			select $CamController
 		)
+		on btn_selectMainCam pressed do 
+		(
+			select $Cam_Main
+		)
 		on spn_horizontalAxis changed value do
 		(
 			$CamController.position.controller.X_position = spn_horizontalAxis.value
@@ -221,7 +227,6 @@ tooltip:"StereoCam"
 			renderWidth  = spn_frameWidth.value
 			renderHeight  = ( spn_frameWidth.value * 9 / 16 )
 			spn_frameHeight.value = renderHeight
-			
 		)
 		
 		on spn_frameHeight changed value do
