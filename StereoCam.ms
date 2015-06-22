@@ -4,14 +4,12 @@ tooltip:"StereoCam"
 	::fileIn(GetDir #userScripts + "\RocketMaxTools" + "\StereoCam.ms")
 )
 
+try(DestroyDialog roStereoCam)catch();
 (
-	 
-	try(DestroyDialog roStereoCam)catch();
-	
 	global roStereoCam
 	
 	fPath = maxFilePath + "render\\"
-	ffmpeg = @"C:\ffmpeg\bin\ffmpeg.exe"
+	ffmpeg = @"C:\Projects\Cow2\Tools\ffmpeg.exe"
 	
 -- 	Lens = 0.5 * (GetRendApertureWidth() / tan(FOV/2.0))
 

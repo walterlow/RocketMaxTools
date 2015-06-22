@@ -56,6 +56,7 @@ tooltip:"Bake Props Tool"
 		checkbutton ckb_UVW "UVW" pos:[4,154] width:78 height:28
 		checkbox chk_uvclipboard "Copy UV to clipboard" pos:[4,184] width:84 height:28
 		spinner spn_diffpadding "Padding" pos:[88,184] width:80 height:4 range:[0,64,0] type:#integer scale:1 fieldwidth:20 tooltip:"Padding for Diffuse only"
+		checkBox chk_hitMatchID "Hit Match ID" pos:[175,184] 
 		
 		button btn_Bake "Bake It!" pos:[4,216] width:180 height:48
 		button btn_OpenOutput "Open Output" pos:[188,216] width:100 height:48
@@ -231,7 +232,7 @@ tooltip:"Bake Props Tool"
 					bpp.enabled = true
 					bpp.UseCage = true
 					bpp.projectionMod = proj
-					bpp.hitMatchMtlID = false
+					bpp.hitMatchMtlID = chk_hitMatchID.checked
 					
 					
 					renderers.current = Default_Scanline_Renderer()
