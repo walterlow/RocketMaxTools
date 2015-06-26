@@ -1,8 +1,3 @@
-macroScript StereoCam category:"RocketBirds"
-tooltip:"StereoCam"
-(
-	::fileIn(GetDir #userScripts + "\RocketMaxTools" + "\StereoCam.ms")
-)
 
 try(DestroyDialog roStereoCam)catch();
 (

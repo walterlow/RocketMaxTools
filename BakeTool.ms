@@ -23,11 +23,6 @@ Author: Walter Low
 */
 ---------------
 
-macroScript BakeTool category:"RocketBirds"
-tooltip:"Bake Props Tool"
-(
-	::fileIn(GetDir #userScripts + "\RocketMaxTools" + "\BakeTool.ms")
-)
 
 (
 

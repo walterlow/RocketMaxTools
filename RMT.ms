@@ -2291,8 +2291,3 @@ Author: Walter Low
 	
 ) -- End of tool scope
 
-macroScript RocketMaxTools category:"RocketBirds"
-tooltip:"RocketMaxTools" --Icon:#("RocketMaxTools",1)
-(
-	::fileIn(GetDir #userScripts + "\\RocketMaxTools\RMT.ms")
-)
