@@ -628,7 +628,7 @@ Author: Walter Low
 		mrom.farAttenEnd = 4.396
 	),
 	
-	fn SetVertColorWhite =
+	fn SetVertColors col =
 	(
 		local objs = getCurrentSelection()
 		if objs.count != 0 then
@@ -637,24 +637,9 @@ Author: Walter Low
 			(
 				addModifier obj (VertexPaint())
 				collapseStack obj
-				polyop.setVertColor obj 0 #{1..getNumVerts obj} [255,255,255]
+				polyop.setVertColor obj 0 #{1..getNumVerts obj} (col)
 			)
-			format "vertex color set to white.\n"
-		)
-	),
-
-	fn SetVertColorBlack =
-	(
-		local objs = getCurrentSelection()
-		if objs.count != 0 then
-		(
-			for obj in objs do
-			(
-				addModifier obj (VertexPaint())
-				collapseStack obj
-				polyop.setVertColor obj 0 #{1..getNumVerts obj} [0,0,0]
-			)
-			format "vertex color set to black.\n"
+			format "vertex color set to %.\n" col
 		)
 	),
 	
@@ -2189,9 +2174,9 @@ Author: Walter Low
 		on btn_animHelper pressed do
 			( try(destroyDialog ro_animHelper) catch(); createDialog ro_animHelper width:232 height:488)
 		on btn_setvertwhite pressed do
-			(RMT.SetVertColorWhite();)
+			(RMT.SetVertColors [255,255,255])
 		on btn_setvertblack pressed do
-			(RMT.SetVertColorBlack();)
+			(RMT.SetVertColors [0,0,0])
 	)
 	
 	rollout ro_Menu03 "Bake Tools" width:260 height:224
