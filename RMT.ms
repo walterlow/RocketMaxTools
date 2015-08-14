@@ -1272,47 +1272,42 @@ Author: Walter Low
 	
 	fn assignDoorMatID =
 	(
-
-		for obj in objects where canConvertTo obj Editable_Poly do
+		doorCount = 0
+		
+		for obj in objects do
 		(
-			case obj.name of
-			(
-				"Exit0_Breakable" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 100
-				"Exit1_Breakable" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 101
-				"Exit2_Breakable" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 102
-				"Exit3_Breakable" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 103
-				"Exit4_Breakable" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 104
-				"Exit5_Breakable" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 105
-				"Exit6_Breakable" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 106
-				"Exit7_Breakable" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 107
-				
-				"Exit0_Frame" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 200
-				"Exit1_Frame" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 201
-				"Exit2_Frame" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 202
-				"Exit3_Frame" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 203
-				"Exit4_Frame" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 204
-				"Exit5_Frame" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 205
-				"Exit6_Frame" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 206
-				"Exit7_Frame" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 207
-				
-				"Exit0_Hole" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 300
-				"Exit1_Hole" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 301
-				"Exit2_Hole" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 302
-				"Exit3_Hole" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 303
-				"Exit4_Hole" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 304
-				"Exit5_Hole" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 305
-				"Exit6_Hole" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 306
-				"Exit7_Hole" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 307
-				
-				"Exit0_Wall" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 400
-				"Exit1_Wall" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 401
-				"Exit2_Wall" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 402
-				"Exit3_Wall" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 403
-				"Exit4_Wall" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 404
-				"Exit5_Wall" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 405
-				"Exit6_Wall" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 406
-				"Exit7_Wall" : polyop.setFaceMatID obj #{1..(polyop.getNumFaces obj)} 407
-			)
+			s = obj.name
+			if matchPattern s pattern:"Exit7_*" then doorCount = 7 else doorCount = 3
+		)
+
+		for i = 0 to doorCount do 
+		(
+			nodeName = "Exit" + i as String + "_Breakable"
+			nodeObj = getNodeByName(nodeName)
+			
+			if classOf nodeObj != Editable_Poly then convertTo nodeObj Editable_Poly 
+			
+	
+			polyop.setFaceMatID nodeObj #{1..(polyop.getNumFaces nodeObj)} (100+i)
+			
+			nodeName = "Exit" + i as String + "_Frame"
+			nodeObj = getNodeByName(nodeName)
+			if classOf nodeObj != Editable_Poly then convertTo nodeObj Editable_Poly 
+		
+			polyop.setFaceMatID nodeObj #{1..(polyop.getNumFaces nodeObj)} (200+i)
+
+			nodeName = "Exit" + i as String + "_Hole"
+			nodeObj = getNodeByName(nodeName)
+		
+			if classOf nodeObj != Editable_Poly then convertTo nodeObj Editable_Poly 
+			polyop.setFaceMatID nodeObj #{1..(polyop.getNumFaces nodeObj)} (300+i)
+
+			nodeName = "Exit" + i as String + "_Wall"
+			nodeObj = getNodeByName(nodeName)
+			
+			if classOf nodeObj != Editable_Poly then convertTo nodeObj Editable_Poly 
+			polyop.setFaceMatID nodeObj #{1..(polyop.getNumFaces nodeObj)} (400+i)
+
 		)
 		print "Doors marked..."
 	),
@@ -1534,7 +1529,8 @@ Author: Walter Low
 				RMT.assignOthersMatID()
 				RMT.SetupMats()
 				RMT.SetupFG()
-				$*.material = sceneMaterials["Main"]
+				--$*.material = sceneMaterials["Main"]
+				$*.material = meditmaterials[1]
 				RMT.createBouncer()
 				RMT.sendtoLayer $Bouncer "Bouncer"
 				clearSelection()
@@ -1579,7 +1575,8 @@ Author: Walter Low
 				RMT.assignOthersMatID()
 				RMT.SetupMats()
 				RMT.SetupFG()
-				$*.material = sceneMaterials["Main"]
+				--$*.material = sceneMaterials["Main"]
+				$*.material = meditmaterials[1]
 				RMT.createBouncer()
 				RMT.sendtoLayer $Bouncer "Bouncer"
 				clearSelection()
