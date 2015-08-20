@@ -1,5 +1,5 @@
-
 try(DestroyDialog roStereoCam)catch();
+
 (
 	global roStereoCam
 	
@@ -15,26 +15,76 @@ try(DestroyDialog roStereoCam)catch();
 		local FOV = 2.0* atan(GetRendApertureWidth()/lensVal*0.5)
 	)
 	
-	fn createMainCam = 
+	fn clearMainCams =
 	(
-		local targetDist = 10
-		local MainCam = Freecamera name:"Cam_Main" wirecolor: white
-		MainCam.orthoProjection = true
-		MainCam.rotation = (angleaxis 90 [1,0,0])
-		MainCam.position = [0, -targetDist, 5]
-		MainCam.baseObject.targetDistance = targetDist
-		MainCam.fov = GetFOVFromLens 35
+		try(
+		delete $Cam_StereoLeft
+		delete $Cam_StereoRight
+		delete $Cam_Main
+		) catch()
 	)
 	
-	fn SetupCameraController =
+	fn createMainCam = 
 	(
-		local CamControl = Dummy name:"CamController" boxsize: [2,2,2]
-		CamControl.transform = $Cam_Main.transform
+		clearMainCams()
 		
-		for c in cameras do 
+		local targetDist = 10
+		
+		mainCam = Freecamera name:"Cam_Main" wirecolor: white
+		mainCam.orthoProjection = true
+		mainCam.rotation = (angleaxis 90 [1,0,0])
+		mainCam.position = [0, -targetDist, 5]
+		mainCam.baseObject.targetDistance = targetDist
+		mainCam.fov = GetFOVFromLens 35
+
+		--Create 2 cameras with offset from main cam
+		::CreateLeftRightCams mainCam
+
+		roStereoCam.UpdateSpinners()
+	)
+	
+	
+	fn ConvertCamToStereo oldCam =
+	(
+		
+		undo on
 		(
-			c.parent = CamControl
+			if oldCam.children.count > 0 then
+			(
+				for c in oldCam.children do
+				(
+					delete c
+				)
+			)
+
+			::CreateLeftRightCams oldCam
+			oldCam.name = "Cam_Main"
+			oldCam.target.name = oldCam.name + ".Target"
 		)
+		
+	)
+	
+	
+	fn CreateLeftRightCams mainCam =
+	(
+		camDist = roStereoCam.spn_camDist.value
+		
+		--local axis
+		camLeft = instance mainCam name:"Cam_StereoLeft" wirecolor: red
+		in coordsys local (camLeft.position.x -= camDist)
+		camRight = instance mainCam name:"Cam_StereoRight" wirecolor: blue
+		in coordsys local (camRight.position.x += camDist)
+		
+		::LinkChildToParent camLeft mainCam
+		::LinkChildToParent camRight mainCam
+
+	)
+	
+	
+	
+	fn LinkChildToParent child parent =
+	(
+		child.parent = parent
 	)
 	
 	fn createVideoFromSequence =
@@ -45,6 +95,8 @@ try(DestroyDialog roStereoCam)catch();
 
 		shellLaunch ffmpeg entstring
 	)
+	
+	
 
 	
 	rollout roStereoCam "Stereo Cam Tool" width:236 height:376
@@ -55,18 +107,20 @@ try(DestroyDialog roStereoCam)catch();
 		spinner spn_frameHeight "Frame Height:" pos:[28,72] width:139 height:16 range:[360 , 4320, 720] type:#integer
 		
 		button btn_createCam "Create Cameras" pos:[16,20] width:91 height:24
+		--pickbutton pickbtn_ReplaceCamera "Replace Cam" filter:camFilter pos:[120,20] width:91 height:24
+		
 
 		GroupBox grp2 "Cam Controls" pos:[4,112] width:224 height:160
-		spinner spn_camDist "Cam Distance:" pos:[24,136] width:139 height:16 range:[0.01,1,0.1]
+		spinner spn_camDist "Cam Distance:" pos:[24,136] width:139 height:16 range:[0.01,10,0.1]
 
 		edittext edt_shotname "Shot Name:" pos:[19,280] width:148 height:17
-		dropdownlist ddl_ext pos:[170,278] width:50 items:#(".jpg", ".bmp", ".png")
+		dropdownlist ddl_ext pos:[170,278] width:50 items:#(".jpg", ".bmp", ".png") selection:3
 		button btn_render "Render" pos:[15,304] width:72 height:32
 		button btn_output "Output Folder" pos:[95,304] width:78 height:32
 		progressBar progBar "" pos:[15,344] width:200 height:16 
  
-		button btn_selectCtrl "Select CamCtrl" pos:[12,160] width:85 height:21
-		button btn_selectMainCam "Select MainCam" pos:[100,160] width:85 height:21
+		--button btn_selectCtrl "Select CamCtrl" pos:[12,160] width:85 height:21
+		button btn_selectMainCam "Select MainCam" pos:[12,160] width:85 height:21
 		spinner spn_FOV "FOV:" pos:[44,190] width:96 height:16 range:[1,1000, GetFOVFromLens 35]
 		spinner spn_horizontalAxis "Horizontal:" pos:[34,212] width:139 height:16 range:[-1000,1000,0]
 		spinner spn_verticalAxis "Vertical:" pos:[34,232] width:139 height:16 range:[-1000,1000,0]
@@ -74,13 +128,13 @@ try(DestroyDialog roStereoCam)catch();
 		
 		fn UpdateSpinners =
 		(
-				spn_FOV.controller =  $Cam_Main.fov.controller
-				spn_horizontalAxis.controller = $CamController.position.controller.X_position.controller
-				spn_verticalAxis.controller = $CamController.position.controller.Z_position.controller
-				spn_pan.controller = $CamController.rotation.controller.Z_Rotation.controller
+				spn_FOV.controller 				= $Cam_Main.fov.controller
+				spn_horizontalAxis.controller 	= $Cam_Main.position.controller.X_position.controller
+				spn_verticalAxis.controller 	= $Cam_Main.position.controller.Z_position.controller
+				spn_pan.controller 				= $Cam_Main.rotation.controller.Z_Rotation.controller
 		)
 		
-		
+
 		on roStereoCam open do 
 		(
 			try
@@ -92,32 +146,29 @@ try(DestroyDialog roStereoCam)catch();
 		
 		on btn_createCam pressed do
 		(
-			try
-			(
-				delete $Cam_StereoLeft
-				delete $Cam_StereoRight
-				delete $Cam_Main
-				delete $CamController
-			) catch();
-			
 			createMainCam()
-		
-			MyCamera = $Cam_Main
-			camDist = spn_camDist.value
-		
-			--local axis
-			CamLeft = instance MyCamera name:"Cam_StereoLeft" wirecolor: red
-			in coordsys local (CamLeft.position.x -= camDist)
-			CamRight = instance MyCamera name:"Cam_StereoRight" wirecolor: blue
-			in coordsys local (CamRight.position.x += camDist)
-			
-			SetupCameraController()
-			UpdateSpinners()
 		)
+		
+		on pickbtn_ReplaceCamera picked cam do
+		(
+			pickbtn_ReplaceCamera.text = cam.name
+			--add replace function here
+			
+			ConvertCamToStereo cam
+			
+		)
+		
+
 		on spn_camDist changed value do
 		(
 			$Cam_StereoLeft.pos.x = $Cam_Main.pos.x - spn_camDist.value
 			$Cam_StereoRight.pos.x = $Cam_Main.pos.x + spn_camDist.value
+			
+			try
+			(
+				$Cam_StereoLeft.target.pos.x = $Cam_Main.target.pos.x - spn_camDist.value
+				$Cam_StereoRight.target.pos.x = $Cam_Main.target.pos.x + spn_camDist.value
+			) catch()
 		)
 		on spn_FOV changed value do
 		(
@@ -153,13 +204,18 @@ try(DestroyDialog roStereoCam)catch();
 					fCount = formattedprint count format: ".4d"
 					fName = fPath + edt_shotname.text  + "-" + fCount + "-" + "Left" + ddl_ext.selected
 					leftbitmap = bitmap spn_frameWidth.value spn_frameHeight.value
-					render camera:CamLeft outputwidth:spn_frameWidth.value outputheight:spn_frameHeight.value  vfb:false to:leftbitmap cancelled: &bCancelled
-						
-					windows.processPostedMessages()
+					start = timeStamp()
+					render camera:CamLeft outputwidth:spn_frameWidth.value outputheight:spn_frameHeight.value  vfb:false to:leftbitmap cancelled: &bCancelled progressbar:false
+					end = timeStamp()
+					format "Last rendered frame took % seconds\n" ((end - start) / 1000.0)
+					
 					fName = fPath + edt_shotname.text  + "-" + fCount + "-" + "Right" + ddl_ext.selected
 					rightbitmap = bitmap spn_frameWidth.value spn_frameHeight.value
-					render camera:CamRight outputwidth:spn_frameWidth.value outputheight:spn_frameHeight.value  vfb:false to:rightbitmap  cancelled: &bCancelled 
-					windows.processPostedMessages()
+					start = timeStamp()
+					render camera:CamRight outputwidth:spn_frameWidth.value outputheight:spn_frameHeight.value  vfb:false to:rightbitmap  cancelled: &bCancelled progressbar:false
+					end = timeStamp()
+					format "Last rendered frame took % seconds\n" ((end - start) / 1000.0)
+					
 					
 					--Combine images here
 					finalbitmap = bitmap (spn_frameWidth.value * 2) spn_frameHeight.value filename: (fPath + edt_shotname.text + "-" + fCount + ddl_ext.selected)
@@ -204,16 +260,18 @@ try(DestroyDialog roStereoCam)catch();
 		)
 		on spn_horizontalAxis changed value do
 		(
-			$CamController.position.controller.X_position = spn_horizontalAxis.value
+			$Cam_Main.position.controller.X_position = spn_horizontalAxis.value
 		)
 		on spn_verticalAxis changed value do
 		(
 			
-			$CamController.position.controller.Z_position = spn_verticalAxis.value
+			$Cam_Main.position.controller.Z_position = spn_verticalAxis.value
 		)
 		on spn_pan changed value do 
 		(
-			$CamController.rotation.controller.Z_Rotation = spn_pan.value
+			
+			$Cam_Main.rotation.controller.Z_Rotation = spn_pan.value
+			
 		)
 		on spn_frameWidth changed value do
 		(
