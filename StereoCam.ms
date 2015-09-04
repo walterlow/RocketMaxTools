@@ -128,7 +128,7 @@ try(DestroyDialog roStereoCam)catch();
 		
 		fn UpdateSpinners =
 		(
-				spn_FOV.controller 				= $Cam_Main.fov.controller
+				spn_FOV.value 					= $Cam_Main.fov
 				spn_horizontalAxis.controller 	= $Cam_Main.position.controller.X_position.controller
 				spn_verticalAxis.controller 	= $Cam_Main.position.controller.Z_position.controller
 				spn_pan.controller 				= $Cam_Main.rotation.controller.Z_Rotation.controller
@@ -142,6 +142,8 @@ try(DestroyDialog roStereoCam)catch();
 				UpdateSpinners()
 	
 			) catch()
+			
+			edt_shotname.text = getFilenameFile maxfilename
 		)
 		
 		on btn_createCam pressed do
@@ -205,14 +207,14 @@ try(DestroyDialog roStereoCam)catch();
 					fName = fPath + edt_shotname.text  + "-" + fCount + "-" + "Left" + ddl_ext.selected
 					leftbitmap = bitmap spn_frameWidth.value spn_frameHeight.value
 					start = timeStamp()
-					render camera:CamLeft outputwidth:spn_frameWidth.value outputheight:spn_frameHeight.value  vfb:false to:leftbitmap cancelled: &bCancelled progressbar:false
+					render camera:CamLeft outputwidth:spn_frameWidth.value outputheight:spn_frameHeight.value  vfb:false to:leftbitmap cancelled: &bCancelled progressbar:true
 					end = timeStamp()
 					format "Last rendered frame took % seconds\n" ((end - start) / 1000.0)
 					
 					fName = fPath + edt_shotname.text  + "-" + fCount + "-" + "Right" + ddl_ext.selected
 					rightbitmap = bitmap spn_frameWidth.value spn_frameHeight.value
 					start = timeStamp()
-					render camera:CamRight outputwidth:spn_frameWidth.value outputheight:spn_frameHeight.value  vfb:false to:rightbitmap  cancelled: &bCancelled progressbar:false
+					render camera:CamRight outputwidth:spn_frameWidth.value outputheight:spn_frameHeight.value  vfb:false to:rightbitmap  cancelled: &bCancelled progressbar:true
 					end = timeStamp()
 					format "Last rendered frame took % seconds\n" ((end - start) / 1000.0)
 					
