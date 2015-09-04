@@ -198,6 +198,11 @@ try(DestroyDialog roStereoCam)catch();
 			camRight = $Cam_StereoRight 
 			bCancelled = false
 			
+			if chkbox_NR.state == true and renderers.current.DistributedEnable == false then
+			(
+				renderers.current.DistributedEnable = true
+			)
+			
 			count = 0
 			slidertime = animationrange.start
 			fstart = animationrange.start
