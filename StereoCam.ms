@@ -99,7 +99,7 @@ try(DestroyDialog roStereoCam)catch();
 	
 
 	
-	rollout roStereoCam "Stereo Cam Tool" width:236 height:376
+	rollout roStereoCam "Stereo Cam Tool" width:236 height:400
 	(
 		GroupBox grp1 "Setup Cam" pos:[4,0] width:224 height:100		
 		
@@ -115,9 +115,15 @@ try(DestroyDialog roStereoCam)catch();
 
 		edittext edt_shotname "Shot Name:" pos:[19,280] width:148 height:17
 		dropdownlist ddl_ext pos:[170,278] width:50 items:#(".jpg", ".bmp", ".png") selection:3
-		button btn_render "Render" pos:[15,304] width:72 height:32
-		button btn_output "Output Folder" pos:[95,304] width:78 height:32
-		progressBar progBar "" pos:[15,344] width:200 height:16 
+		
+		checkbox chkbox_NR "Net Render" pos:[15,304] checked:false toolTip:"Enable Distributed Rendering."
+		
+		button btn_editHost "Edit Hosts" pos:[95, 304] height:20
+		
+		button btn_render "Render" pos:[15,328] width:72 height:32
+		button btn_output "Output Folder" pos:[95,328] width:78 height:32
+		
+		progressBar progBar "" pos:[15,364] width:200 height:16 
  
 		--button btn_selectCtrl "Select CamCtrl" pos:[12,160] width:85 height:21
 		button btn_selectMainCam "Select MainCam" pos:[12,160] width:85 height:21
@@ -125,6 +131,10 @@ try(DestroyDialog roStereoCam)catch();
 		spinner spn_horizontalAxis "Horizontal:" pos:[34,212] width:139 height:16 range:[-1000,1000,0]
 		spinner spn_verticalAxis "Vertical:" pos:[34,232] width:139 height:16 range:[-1000,1000,0]
 		spinner spn_pan "Pan:" pos:[34,252] width:139 height:16 range:[-1000,1000,0]
+		
+	
+		
+		
 		
 		fn UpdateSpinners =
 		(
@@ -144,6 +154,7 @@ try(DestroyDialog roStereoCam)catch();
 			) catch()
 			
 			edt_shotname.text = getFilenameFile maxfilename
+			chkbox_NR.state = renderers.current.DistributedEnable
 		)
 		
 		on btn_createCam pressed do
@@ -204,32 +215,33 @@ try(DestroyDialog roStereoCam)catch();
 					progBar.color = green
 					
 					fCount = formattedprint count format: ".4d"
-					fName = fPath + edt_shotname.text  + "-" + fCount + "-" + "Left" + ddl_ext.selected
-					leftbitmap = bitmap spn_frameWidth.value spn_frameHeight.value
+					fName = fPath + edt_shotname.text  + "-Left-"  + fCount + ddl_ext.selected
+					leftbitmap = bitmap spn_frameWidth.value spn_frameHeight.value filename:fName
 					start = timeStamp()
 					render camera:CamLeft outputwidth:spn_frameWidth.value outputheight:spn_frameHeight.value  vfb:false to:leftbitmap cancelled: &bCancelled progressbar:true
 					end = timeStamp()
 					format "Last rendered frame took % seconds\n" ((end - start) / 1000.0)
+					save leftbitmap
 					
-					fName = fPath + edt_shotname.text  + "-" + fCount + "-" + "Right" + ddl_ext.selected
-					rightbitmap = bitmap spn_frameWidth.value spn_frameHeight.value
+					fName = fPath + edt_shotname.text  + "-Right-" + fCount + ddl_ext.selected
+					rightbitmap = bitmap spn_frameWidth.value spn_frameHeight.value filename:fName
 					start = timeStamp()
 					render camera:CamRight outputwidth:spn_frameWidth.value outputheight:spn_frameHeight.value  vfb:false to:rightbitmap  cancelled: &bCancelled progressbar:true
 					end = timeStamp()
 					format "Last rendered frame took % seconds\n" ((end - start) / 1000.0)
-					
+					save rightbitmap
 					
 					--Combine images here
-					finalbitmap = bitmap (spn_frameWidth.value * 2) spn_frameHeight.value filename: (fPath + edt_shotname.text + "-" + fCount + ddl_ext.selected)
-					pasteBitmap leftbitmap finalbitmap [0, 0] [0,0]
+					--finalbitmap = bitmap (spn_frameWidth.value * 2) spn_frameHeight.value filename: (fPath + edt_shotname.text + "-" + fCount + ddl_ext.selected)
+					--pasteBitmap leftbitmap finalbitmap [0, 0] [0,0]
 					
 					--SBS side by side
-					pasteBitmap rightbitmap finalbitmap [0, 0] [spn_frameWidth.value,0]
+					--pasteBitmap rightbitmap finalbitmap [0, 0] [spn_frameWidth.value,0]
 					
 					--TAB top and bottom
 		-- 			pasteBitmap rightbitmap finalbitmap [0, 0] [0, spn_frameHeight.value]
 		
-					save finalbitmap
+					--save finalbitmap
 					
 					count += 1
 					slidertime +=1
@@ -241,7 +253,7 @@ try(DestroyDialog roStereoCam)catch();
 			
 			if (not bCancelled) do
 			(
-				createVideoFromSequence()
+				--createVideoFromSequence()
 			)
 			
 			count = 0
@@ -260,6 +272,18 @@ try(DestroyDialog roStereoCam)catch();
 		(
 			select $Cam_Main
 		)
+		
+		on chkbox_NR changed state do
+		(
+			renderers.current.DistributedEnable = state;
+			format "Net Render %\n" state
+		)
+		
+		on btn_editHost pressed do 
+		(
+			HiddenDOSCommand "notepad C:\Program Files\Autodesk\3ds Max 2011\mentalimages\max.rayhosts" 
+		)
+		
 		on spn_horizontalAxis changed value do
 		(
 			$Cam_Main.position.controller.X_position = spn_horizontalAxis.value
