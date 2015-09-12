@@ -208,8 +208,6 @@ try(DestroyDialog roStereoCam)catch();
 			)
 
 			rad_frame.state = 2
-			
-			format "% % % \n" mainCam leftCam rightCam
 		)
 		
 		on btn_createCam pressed do
