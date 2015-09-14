@@ -1457,7 +1457,7 @@ Author: Walter Low
 	
 	fn Backup =
 	(
-		local raw_mfn = maxfilename 
+		
 		local mfn = getfilenamefile maxfilename
 		local fList, fCount, fVer, fOut, fFilter, a, ver
 		

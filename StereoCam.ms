@@ -59,6 +59,12 @@ try(DestroyDialog roStereoCam)catch();
 			local FOV = 2.0* atan(GetRendApertureWidth()/lensVal*0.5)
 		)
 		
+		fn EnableViewPortShading bool =
+		(
+			vss = maxops.getViewportShadingSettings()
+			vss.ActivateViewportShading = bool
+		)
+		
 		fn createMainCam =
 		(
 				targetDist = 10
@@ -177,8 +183,7 @@ try(DestroyDialog roStereoCam)catch();
 
 				save finalbitmap
 				
-				index += 1
-				slidertime +=1
+
 						
 			)
 		)
@@ -260,14 +265,18 @@ try(DestroyDialog roStereoCam)catch();
 			viewport.activeViewport = 1
 			viewport.setCamera leftCam
 			viewport.SetRenderLevel #smoothhighlights 
+			EnableViewPortShading true
 
 			viewport.activeViewport = 2
 			viewport.setCamera rightCam
 			viewport.SetRenderLevel #smoothhighlights 
+			EnableViewPortShading true
 			
 			viewport.activeViewport = 3
 			viewport.setType #view_persp_user
 			viewport.SetRenderLevel #smoothhighlights 
+			EnableViewPortShading true
+
 			
 			redrawViews()
 		)
@@ -293,6 +302,8 @@ try(DestroyDialog roStereoCam)catch();
 				for i = spn_rendStart.value  to spn_rendEnd.value do 
 				(
 					RenderFrames()
+					index += 1
+					slidertime +=1
 				)
 			)
 			--Render single frame
