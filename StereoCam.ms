@@ -94,9 +94,9 @@ try(DestroyDialog roStereoCam)catch();
 				if queryBox "Stereo Cameras exists in the current scene!\n Do you want to replace them?"  title:"Warning!" then 
 				(
 					try(
-						delete $Cam_StereoLeft
-						delete $Cam_StereoRight
-						delete $Cam_Main
+						delete mainCam
+						delete leftCam
+						delete rightCam
 					) catch()
 					
 					createMainCam()
