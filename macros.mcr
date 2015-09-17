@@ -1,17 +1,21 @@
+
+scriptPath = GetDir #userScripts + "\\RocketMaxTools\\"
+
 macroScript StereoCam category:"RocketBirds"
 tooltip:"StereoCam"
 (
-	::fileIn(GetDir #userScripts + "\RocketMaxTools" + "\StereoCam.ms")
+	fileIn( scriptPath + "StereoCam.ms" )
 )
 
 macroScript RocketMaxTools category:"RocketBirds"
-tooltip:"RocketMaxTools" --Icon:#("RocketMaxTools",1)
+tooltip:"RocketMaxTools"
 (
-	::fileIn(GetDir #userScripts + "\\RocketMaxTools\RMT.ms")
+	fileIn( scriptPath + "RMT.ms" )
 )
 
 macroScript BakeTool category:"RocketBirds"
 tooltip:"Bake Props Tool"
 (
-	::fileIn(GetDir #userScripts + "\RocketMaxTools" + "\BakeTool.ms")
+	fileIn( scriptPath + "BakeTool.ms" )
 )
+

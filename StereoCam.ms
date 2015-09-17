@@ -1,3 +1,27 @@
+
+/*******************************************************************************************************
+-- Created: 		08-06-2015
+-- Last Updated:	17-09-2015
+-- Version:			0.02
+--
+-- Author :  Walter Low / walterlow88@gmail.com / walterlow.com
+-- Version:  3ds max 2011
+--
+-- Description: A script to render image sequences from Left and Right cameras based off a Main Camera.
+-- Usage: RUN IT
+--
+-- Wishlist:
+--
+-- Changelog:
+*	Changed output path to a folder relative to scene name.
++	Camera offset distance updates according to cameras in scene.
++	Option to render mono or stereo frames.
+
+--******************************************************************************************************
+-- MODIFY THIS AT YOUR OWN RISK
+*******************************************************************************************************/
+
+
 try(DestroyDialog roStereoCam)catch();
 
 (
@@ -6,9 +30,9 @@ try(DestroyDialog roStereoCam)catch();
 	rollout roStereoCam "Stereo Cam Tool" width:236 height:450
 	(
 		--local vars
-		local fPath = maxFilePath + "render\\"
+		local fPath
 		local ffmpeg = @"C:\Projects\Cow2\Tools\ffmpeg.exe"
-		local mainCam, leftCam, rightCam
+		local mainCam, leftCam, rightCam, camDist
 		local bCancelled, index
 		
 	-- 	Lens = 0.5 * (GetRendApertureWidth() / tan(FOV/2.0))
@@ -32,7 +56,7 @@ try(DestroyDialog roStereoCam)catch();
 		radiobuttons rad_frame "Time output:" labels:#("Single", "Range") pos:[12,298] columns:2
 		spinner spn_rendStart "Start" pos:[12,334] fieldWidth: 40 type:#integer range:[0,99999,animationRange.start]
 		spinner spn_rendEnd "End" pos:[100,334] fieldWidth: 40  type:#integer range:[0,99999,animationRange.end]
-		
+		checkbox chkbox_stereo "Stereo?" pos:[179,334]
 		
 		checkbox chkbox_NR "Net Render" pos:[12,354] checked:false toolTip:"Enable Distributed Rendering."
 		button btn_editHost "Edit Hosts" pos:[95, 354] height:20
@@ -61,13 +85,13 @@ try(DestroyDialog roStereoCam)catch();
 		
 		fn EnableViewPortShading bool =
 		(
-			vss = maxops.getViewportShadingSettings()
+			local vss = maxops.getViewportShadingSettings()
 			vss.ActivateViewportShading = bool
 		)
 		
 		fn createMainCam =
 		(
-				targetDist = 10
+				local targetDist = 10
 	
 				mainCam = Freecamera name:"Cam_Main" wirecolor: white
 				mainCam.orthoProjection = true
@@ -87,8 +111,7 @@ try(DestroyDialog roStereoCam)catch();
 			if $Cam_Main == undefined then
 			(
 				createMainCam()
-			) 
-			
+			) 			
 			else
 			(
 				if queryBox "Stereo Cameras exists in the current scene!\n Do you want to replace them?"  title:"Warning!" then 
@@ -101,8 +124,7 @@ try(DestroyDialog roStereoCam)catch();
 					
 					createMainCam()
 					
-				)
-				
+				)				
 			)		
 		)
 		
@@ -129,8 +151,8 @@ try(DestroyDialog roStereoCam)catch();
 		
 		fn createVideoFromSequence =
 		(
-			QTPathOut = fPath + roStereoCam.edt_shotname.text + ".avi"
-			entstring = "-y -i " + fPath + roStereoCam.edt_shotname.text + "-%4d" + roStereoCam.ddl_ext.selected + " -vcodec huffyuv -r 30 " + QTPathOut
+			local QTPathOut = fPath + roStereoCam.edt_shotname.text + ".avi"
+			local entstring = "-y -i " + fPath + roStereoCam.edt_shotname.text + "-%4d" + roStereoCam.ddl_ext.selected + " -vcodec huffyuv -r 30 " + QTPathOut
 
 			shellLaunch ffmpeg entstring
 		)
@@ -149,41 +171,56 @@ try(DestroyDialog roStereoCam)catch();
 				spn_pan.controller = mainCam.rotation.controller.Z_Rotation.controller
 		)
 		
-		fn RenderFrames =
+		fn RenderFrames stereo:true =
 		(
 			if (not bCancelled) do
 			(
+				
+				if (stereo) then
+				(
+				
+					local fIndex = formattedprint (index.frame as integer) format: ".4d"
+					local fName = fPath + edt_shotname.text  + "-Left-"  + fIndex + ddl_ext.selected
+					local leftbitmap = bitmap spn_frameWidth.value spn_frameHeight.value filename:fName
+					local start = timeStamp()
+					render camera:leftCam outputwidth:spn_frameWidth.value outputheight:spn_frameHeight.value  vfb:false to:leftbitmap cancelled: &bCancelled progressbar:true
+					local end = timeStamp()
+					format "Last rendered left frame took % seconds\n" ((end - start) / 1000.0)
+					save leftbitmap
+					
+					fName = fPath + edt_shotname.text  + "-Right-" + fIndex + ddl_ext.selected
+					local rightbitmap = bitmap spn_frameWidth.value spn_frameHeight.value filename:fName
+					start = timeStamp()
+					render camera:rightCam outputwidth:spn_frameWidth.value outputheight:spn_frameHeight.value  vfb:false to:rightbitmap  cancelled: &bCancelled progressbar:true
+					end = timeStamp()
+					format "Last rendered right frame took % seconds\n" ((end - start) / 1000.0)
+					save rightbitmap
+					
+					--Combine images here
+					local finalbitmap = bitmap (spn_frameWidth.value * 2) spn_frameHeight.value filename: (fPath + edt_shotname.text + "-LR-" + fIndex + ddl_ext.selected)
+					pasteBitmap leftbitmap finalbitmap [0, 0] [0,0]
+					
+					--SBS (side by side)
+					pasteBitmap rightbitmap finalbitmap [0, 0] [spn_frameWidth.value,0]
+					
+					--TAB (top and bottom)
+		 			--pasteBitmap rightbitmap finalbitmap [0, 0] [0, spn_frameHeight.value]
 
-				fIndex = formattedprint (index.frame as integer) format: ".4d"
-				fName = fPath + edt_shotname.text  + "-Left-"  + fIndex + ddl_ext.selected
-				leftbitmap = bitmap spn_frameWidth.value spn_frameHeight.value filename:fName
-				start = timeStamp()
-				render camera:leftCam outputwidth:spn_frameWidth.value outputheight:spn_frameHeight.value  vfb:false to:leftbitmap cancelled: &bCancelled progressbar:true
-				end = timeStamp()
-				format "Last rendered left frame took % seconds\n" ((end - start) / 1000.0)
-				save leftbitmap
+					save finalbitmap
 				
-				fName = fPath + edt_shotname.text  + "-Right-" + fIndex + ddl_ext.selected
-				rightbitmap = bitmap spn_frameWidth.value spn_frameHeight.value filename:fName
-				start = timeStamp()
-				render camera:rightCam outputwidth:spn_frameWidth.value outputheight:spn_frameHeight.value  vfb:false to:rightbitmap  cancelled: &bCancelled progressbar:true
-				end = timeStamp()
-				format "Last rendered right frame took % seconds\n" ((end - start) / 1000.0)
-				save rightbitmap
-				
-				--Combine images here
-				finalbitmap = bitmap (spn_frameWidth.value * 2) spn_frameHeight.value filename: (fPath + edt_shotname.text + "-" + fIndex + ddl_ext.selected)
-				pasteBitmap leftbitmap finalbitmap [0, 0] [0,0]
-				
-				--SBS side by side
-				pasteBitmap rightbitmap finalbitmap [0, 0] [spn_frameWidth.value,0]
-				
-				--TAB top and bottom
-	-- 			pasteBitmap rightbitmap finalbitmap [0, 0] [0, spn_frameHeight.value]
-
-				save finalbitmap
-				
-
+				)
+				else
+				(
+								
+					local fIndex = formattedprint (index.frame as integer) format: ".4d"
+					local fName = fPath + edt_shotname.text  + "-Mono-"  + fIndex + ddl_ext.selected
+					local mainbitmap = bitmap spn_frameWidth.value spn_frameHeight.value filename:fName
+					local start = timeStamp()
+					render camera:mainCam outputwidth:spn_frameWidth.value outputheight:spn_frameHeight.value  vfb:false to:mainbitmap cancelled: &bCancelled progressbar:true
+					local end = timeStamp()
+					format "Last rendered main frame took % seconds\n" ((end - start) / 1000.0)
+					save mainbitmap
+				)
 						
 			)
 		)
@@ -196,6 +233,7 @@ try(DestroyDialog roStereoCam)catch();
 		(
 
 			edt_shotname.text = getFilenameFile maxfilename
+			fPath = maxFilePath + "render\\" + edt_shotname.text + "\\"
 
 			if renderers.current == mental_ray_renderer then
 			(
@@ -210,9 +248,11 @@ try(DestroyDialog roStereoCam)catch();
 				
 				UpdateSpinners()
 				chkbox_ortho.state = mainCam.orthoProjection
+				spn_camDist.value = abs( (mainCam.pos.x - leftCam.pos.x) )
 			)
 
 			rad_frame.state = 2
+			chkbox_stereo.state = true
 		)
 		
 		on btn_createCam pressed do
@@ -256,7 +296,6 @@ try(DestroyDialog roStereoCam)catch();
 		(
 			animationRange.end = value
 		)
-
 		
 		on btn_setupViews pressed do 
 		(
@@ -288,8 +327,7 @@ try(DestroyDialog roStereoCam)catch();
 		
 		on btn_render pressed do
 		(
-			totalStart = timeStamp()
-			fPath = maxFilePath + "render\\"
+			local totalStart = timeStamp()
 			bCancelled = false
 			
 			CreateFolder fPath
@@ -301,7 +339,7 @@ try(DestroyDialog roStereoCam)catch();
 
 				for i = spn_rendStart.value  to spn_rendEnd.value do 
 				(
-					RenderFrames()
+					RenderFrames stereo:chkbox_stereo.state
 					index += 1
 					slidertime +=1
 				)
@@ -310,7 +348,7 @@ try(DestroyDialog roStereoCam)catch();
 			else
 			(
 				index = sliderTime
-				RenderFrames()	
+				RenderFrames stereo:chkbox_stereo.state	
 			)
 
 			gc light:true
@@ -321,13 +359,12 @@ try(DestroyDialog roStereoCam)catch();
 			)
 			
 			bCancelled = false
-			totalEnd = timeStamp()
+			local totalEnd = timeStamp()
 			format "Total Render Process took: % seconds\n" ((totalEnd-totalStart)/1000)
 		)
 		
 		on btn_output pressed do
 		(
-			fPath = maxFilePath + "render\\"
 			ShellLaunch "explorer.exe" (CreateFolder fPath)
 		)
 
@@ -370,10 +407,8 @@ try(DestroyDialog roStereoCam)catch();
 		)
 		
 		on spn_pan changed value do 
-		(
-			
+		(			
 			mainCam.rotation.controller.Z_Rotation = spn_pan.value
-			
 		)
 		
 		on spn_frameWidth changed value do
