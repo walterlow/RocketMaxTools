@@ -1897,17 +1897,11 @@ Author: Walter Low
 		--remove this soon
 		fn TransferUV = 
 		(
-		ChannelInfo.CopyChannel btn_source.object  3 spn_sourcechn.value
-		--modPanel.setCurrentObject target.baseObject ui:false
-	-- 	modPanel.setCurrentObject target.baseobject
-		ChannelInfo.PasteChannel btn_target.object 3 spn_targetchn.value
-	-- 	modPanel.setCurrentObject target.modifiers[#UVW_Mapping_Paste]
-		--maxOps.CollapseNodeTo target 2 off
+			ChannelInfo.CopyChannel btn_source.object  3 spn_sourcechn.value
+			ChannelInfo.PasteChannel btn_target.object 3 spn_targetchn.value
 		)
 
-	-- 	modPanel.setCurrentObject $Terminator002.modifiers[#UVW_Mapping_Paste]
-	-- deleteModifier $Terminator002 1
-	-- maxOps.CollapseNodeTo $Terminator002 2 off
+
 
 		--If the user picked an object, then
 		on btn_source picked obj do

@@ -1,8 +1,8 @@
 
 /*******************************************************************************************************
 -- Created: 		08-06-2015
--- Last Updated:	17-09-2015
--- Version:			0.02
+-- Last Updated:	18-09-2015
+-- Version:			0.04
 --
 -- Author :  Walter Low / walterlow88@gmail.com / walterlow.com
 -- Version:  3ds max 2011
@@ -13,12 +13,16 @@
 -- Wishlist:
 --
 -- Changelog:
+0.04:
++	Added render frame constrains
++	Freeze left and right cams upon creation or tool open.
+*	Changed output formatting to 6 digits.
+0.03:
 *	Changed output path to a folder relative to scene name.
+0.02:
 +	Camera offset distance updates according to cameras in scene.
 +	Option to render mono or stereo frames.
 
---******************************************************************************************************
--- MODIFY THIS AT YOUR OWN RISK
 *******************************************************************************************************/
 
 
@@ -29,18 +33,21 @@ try(DestroyDialog roStereoCam)catch();
 	
 	rollout roStereoCam "Stereo Cam Tool" width:236 height:450
 	(
-		--local vars
+		
 		local fPath
 		local ffmpeg = @"C:\Projects\Cow2\Tools\ffmpeg.exe"
 		local mainCam, leftCam, rightCam, camDist
 		local bCancelled, index
 		
+		
 	-- 	Lens = 0.5 * (GetRendApertureWidth() / tan(FOV/2.0))
 
-		GroupBox grp1 "Setup Cam" pos:[4,0] width:224 height:100		
+		GroupBox grp1 "Setup Cam" pos:[4,0] width:224 height:110		
 		
 		spinner spn_frameWidth "Frame Width:" pos:[28,52] width:139 height:16 range:[640, 7680 , 1280] type:#integer
 		spinner spn_frameHeight "Frame Height:" pos:[28,72] width:139 height:16 range:[360 , 4320, 720] type:#integer
+		checkBox chkbox_constrain "Constraint Proportions" pos:[16,90]
+		
 		
 		button btn_createCam "Create Cameras" pos:[16,20] width:91 height:24
 
@@ -49,7 +56,7 @@ try(DestroyDialog roStereoCam)catch();
 		spinner spn_camDist "Cam Distance:" pos:[32,136] width:100 height:16 range:[0.01,10,0.1] fieldwidth:40
 		checkBox chkbox_ortho "Ortho" pos:[150,136]
 		
-		edittext edt_shotname "Shot Name:" pos:[12,280] width:148 height:17
+		edittext edt_shotname "Name:" pos:[12,280] width:148 height:17
 		dropdownlist ddl_ext pos:[170,278] width:50 items:#(".jpg", ".bmp", ".png") selection:3
 		
 		
@@ -142,6 +149,9 @@ try(DestroyDialog roStereoCam)catch();
 			roStereoCam.LinkChildToParent leftCam mainCam
 			roStereoCam.LinkChildToParent rightCam mainCam
 			
+			freeze leftCam
+			freeze rightCam
+			
 		)
 		
 		fn LinkChildToParent child parent =
@@ -152,7 +162,7 @@ try(DestroyDialog roStereoCam)catch();
 		fn createVideoFromSequence =
 		(
 			local QTPathOut = fPath + roStereoCam.edt_shotname.text + ".avi"
-			local entstring = "-y -i " + fPath + roStereoCam.edt_shotname.text + "-%4d" + roStereoCam.ddl_ext.selected + " -vcodec huffyuv -r 30 " + QTPathOut
+			local entstring = "-y -i " + fPath + roStereoCam.edt_shotname.text + "-%6d" + roStereoCam.ddl_ext.selected + " -vcodec huffyuv -r 30 " + QTPathOut
 
 			shellLaunch ffmpeg entstring
 		)
@@ -179,7 +189,7 @@ try(DestroyDialog roStereoCam)catch();
 				if (stereo) then
 				(
 				
-					local fIndex = formattedprint (index.frame as integer) format: ".4d"
+					local fIndex = formattedprint (index.frame as integer) format: ".6d"
 					local fName = fPath + edt_shotname.text  + "-Left-"  + fIndex + ddl_ext.selected
 					local leftbitmap = bitmap spn_frameWidth.value spn_frameHeight.value filename:fName
 					local start = timeStamp()
@@ -212,7 +222,7 @@ try(DestroyDialog roStereoCam)catch();
 				else
 				(
 								
-					local fIndex = formattedprint (index.frame as integer) format: ".4d"
+					local fIndex = formattedprint (index.frame as integer) format: ".6d"
 					local fName = fPath + edt_shotname.text  + "-Mono-"  + fIndex + ddl_ext.selected
 					local mainbitmap = bitmap spn_frameWidth.value spn_frameHeight.value filename:fName
 					local start = timeStamp()
@@ -246,13 +256,21 @@ try(DestroyDialog roStereoCam)catch();
 				leftCam = $Cam_StereoLeft
 				rightCam = $Cam_StereoRight
 				
+								
+				freeze leftCam
+				freeze rightCam
+				
 				UpdateSpinners()
 				chkbox_ortho.state = mainCam.orthoProjection
 				spn_camDist.value = abs( (mainCam.pos.x - leftCam.pos.x) )
 			)
+			
+			renderWidth = spn_frameWidth.value
+			renderHeight = spn_frameHeight.value
 
 			rad_frame.state = 2
 			chkbox_stereo.state = true
+			chkbox_constrain.state = true   
 		)
 		
 		on btn_createCam pressed do
@@ -315,9 +333,9 @@ try(DestroyDialog roStereoCam)catch();
 			viewport.setType #view_persp_user
 			viewport.SetRenderLevel #smoothhighlights 
 			EnableViewPortShading true
-
-			
+	
 			redrawViews()
+		
 		)
 		
 		on btn_resetViews pressed do 
@@ -413,16 +431,32 @@ try(DestroyDialog roStereoCam)catch();
 		
 		on spn_frameWidth changed value do
 		(
-			renderWidth  = spn_frameWidth.value
-			renderHeight  = ( spn_frameWidth.value * 9 / 16 )
-			spn_frameHeight.value = renderHeight
+			if (chkbox_constrain.state) then 
+			(
+				renderWidth  = spn_frameWidth.value
+				renderHeight  = ( spn_frameWidth.value * 9 / 16 )
+				spn_frameHeight.value = renderHeight
+			)
+			else
+			(
+				renderWidth = value
+			)
+			
 		)
 		
 		on spn_frameHeight changed value do
 		(
-			renderHeight  = spn_frameHeight.value
-			renderWidth  = ( spn_frameHeight.value * 16 / 9 )
-			spn_frameWidth.value = renderWidth
+			if (chkbox_constrain.state) then 
+			(
+				renderHeight  = spn_frameHeight.value
+				renderWidth  = ( spn_frameHeight.value * 16 / 9 )
+				spn_frameWidth.value = renderWidth
+			)
+			else
+			(
+				renderHeight = value
+			)
+			
 		)
 	)
 	
