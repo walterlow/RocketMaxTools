@@ -1,36 +1,42 @@
---------------
-/*
+/*******************************************************************************************************
+-- Created: 		09-Jan-2015
+-- Last Updated:	19-Sep-2015
+-- Version:			0.24
+--
+-- Author :  Walter Low / walterlow88@gmail.com / walterlow.com
+-- Version:  3ds max 2011
+--
+-- Description: Tool for easier baking of props.
+-- Usage: RUN IT
+--
+-- Todo:
++	Removing the marking of low poly as its redundant.
 
-Changes:
-
+-- Changelog:
+0.24:
++	added option for matching material ids.
 0.23:
-+ Add custom padding option for diffuse mask
-
-
++	Add custom padding option for diffuse mask.
 0.22:
-*fixed script crash when cancelling a render
-
+*	fixed script crash when cancelling a render.
 0.21:
-* cancel all renders if an element was cancelled
-
+*	cancel all renders if an element was cancelled.
 0.2: 
-+ uv copying
-+ added AO sample options
-+ added use custom folder option
-* changed method of marking low poly
++	uv copying to clipboard.
++	added AO sample options.
++	added custom folder option.
+*	changed method of marking low poly
+0.1:
+*	inital tool
 
-Author: Walter Low
-*/
----------------
-
-
+*******************************************************************************************************/
 (
 
 	global ro_BakeTool
 	
 	try (destroyDialog ro_BakeTool)catch()
 
-	rollout ro_BakeTool "RocketBakeTool 0.23" width:406 height:268
+	rollout ro_BakeTool "RocketBakeTool 0.24" width:406 height:268
 	(
 		
 		local fullpath
@@ -40,12 +46,8 @@ Author: Walter Low
 		local LP = #()
 		local bCancelled = false
 		local vfb
-		-------------------------------------------------
-		--UI Elements--
-		-------------------------------------------------	
-		
+
 		checkbutton ckb_Diffuse "Diffuse" pos:[88,154] width:78 height:28	
-	
 		checkbutton ckb_Normal "Normal" pos:[168,154] width:78 height:28
 		checkbutton ckb_AO "AO" pos:[248,154] width:56 height:28
 		checkbutton ckb_UVW "UVW" pos:[4,154] width:78 height:28
@@ -353,6 +355,8 @@ Author: Walter Low
 			if not doesFileExist iniFile then 
 			(
 				--create ini file
+				makeDir inipath
+
 				setINISetting iniFile  "Elements" "Diffuse" "true" 
 				setINISetting iniFile 	"Elements" "Normals" "true" 
 				setINISetting iniFile  "Elements" "AO" "true" 
@@ -371,6 +375,26 @@ Author: Walter Low
 				setINISetting iniFile "Settings" "WinPosX" "0"
 				setINISetting iniFile "Settings" "WinPosY" "0"
 			)
+			else 
+			(
+				ckb_Diffuse.checked = (getINISetting iniFile "Elements" "Diffuse") as BooleanClass
+				ckb_Normal.checked = (getINISetting iniFile "Elements" "Normals") as BooleanClass
+				ckb_AO.checked = (getINISetting iniFile "Elements" "AO") as BooleanClass
+				ckb_UVW.checked = (getINISetting iniFile "Elements" "UVW") as BooleanClass
+				
+				ddl_textureSizes.selection = (getINISetting iniFile "Settings" "TexSize") as integer
+				chk_showvfb.checked = (getINISetting iniFile "Settings" "ShowVFB") as BooleanClass
+				chk_autoclosevfb.checked = (getINISetting iniFile "Settings" "AutoCloseVFB") as BooleanClass
+				chk_uvclipboard.checked = (getINISetting iniFile "Settings" "UVClipboard") as BooleanClass
+				
+				chk_customsize.checked = (getINISetting iniFile "Settings" "CustomSize") as BooleanClass
+				spn_xsize.value = (getINISetting iniFile "Settings" "CustomSizeX") as integer
+				spn_ysize.value = (getINISetting iniFile "Settings" "CustomSizeY") as integer
+				
+				chk_fixratio.checked = (getINISetting iniFile "Settings" "FixedRatio") as BooleanClass
+				
+				SetDialogPos ro_BakeTool [ (getINISetting iniFile "Settings" "WinPosX") as float , (getINISetting iniFile "Settings" "WinPosY") as float]
+			)
 				
 			if (hasINISetting iniFile "Settings" "CustomFolder") then
 			(
@@ -383,23 +407,7 @@ Author: Walter Low
 				edt_Output.text = GetRenderPath()
 			)
 						
-			ckb_Diffuse.checked = (getINISetting iniFile "Elements" "Diffuse") as BooleanClass
-			ckb_Normal.checked = (getINISetting iniFile "Elements" "Normals") as BooleanClass
-			ckb_AO.checked = (getINISetting iniFile "Elements" "AO") as BooleanClass
-			ckb_UVW.checked = (getINISetting iniFile "Elements" "UVW") as BooleanClass
-			
-			ddl_textureSizes.selection = (getINISetting iniFile "Settings" "TexSize") as integer
-			chk_showvfb.checked = (getINISetting iniFile "Settings" "ShowVFB") as BooleanClass
-			chk_autoclosevfb.checked = (getINISetting iniFile "Settings" "AutoCloseVFB") as BooleanClass
-			chk_uvclipboard.checked = (getINISetting iniFile "Settings" "UVClipboard") as BooleanClass
-			
-			chk_customsize.checked = (getINISetting iniFile "Settings" "CustomSize") as BooleanClass
-			spn_xsize.value = (getINISetting iniFile "Settings" "CustomSizeX") as integer
-			spn_ysize.value = (getINISetting iniFile "Settings" "CustomSizeY") as integer
-			
-			chk_fixratio.checked = (getINISetting iniFile "Settings" "FixedRatio") as BooleanClass
-			
-			SetDialogPos ro_BakeTool [ (getINISetting iniFile "Settings" "WinPosX") as float , (getINISetting iniFile "Settings" "WinPosY") as float]
+
 			
 		)
 		on ro_BakeTool close do
@@ -408,7 +416,7 @@ Author: Walter Low
 			DestroyCallbacks()
 			
 			setINISetting iniFile  "Elements" "Diffuse" (ckb_Diffuse.checked as String)
-			setINISetting iniFile 	"Elements" "Normals" (ckb_Normal.checked as String)
+			setINISetting iniFile  "Elements" "Normals" (ckb_Normal.checked as String)
 			setINISetting iniFile  "Elements" "AO" (ckb_AO.checked as String)
 			setINISetting iniFile  "Elements" "UVW" (ckb_UVW.checked as String)
 			setINISetting iniFile  "Settings" "UVClipboard" (chk_uvclipboard.checked as String)

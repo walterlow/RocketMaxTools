@@ -1,22 +1,32 @@
---------------
-/*
+/*******************************************************************************************************
+-- Created: 		24-July-2014
+-- Last Updated:	19-Sep-2015
+-- Version:			1.04
+--
+-- Author :  Walter Low / walterlow88@gmail.com / walterlow.com
+-- Version:  3ds max 2011
+--
+-- Description: Automation scripts for the screens.
+-- Usage: RUN IT
+--
+-- TODO:
++	To clean up/rewrite the whole script. o.o
 
-Changes:
+-- Changelog:
+1.04:	19-09-2015
++	Minor refactor
++	Updated paths to SVN folder.
 1.03:
-Refactor create material functions
-Fixed new scene auto init code
-
++	Refactor create material function
++	Fixed new scene auto init code
 1.02:
-
++	Doors can be detached automatically.
 1.01:
-+ reset ui position if settings file is not present.
-
++	reset ui position if settings file is not present.
 1.00:
--
+*	Didnt record changelog before.
 
-Author: Walter Low
-*/
----------------
+*******************************************************************************************************/
 
 ( 
 	--Global UI vars
@@ -43,16 +53,15 @@ Author: Walter Low
 
 	struct _RMT_
 	(
-		scriptName = "RocketMaxTools",
-		settingsfile = getDir #userscripts + "\\" + scriptName + "\\" + "RMTSettings.ini",
+		settingsfile = getDir #userscripts + "\\RocketMaxTools\\" + "RMTSettings.ini",
+		svn_path,
 		script_path,
 		working_path,
 		final_path,
 		shader_path,
 		ext,
 		mrRender,
-		slRender,
-		
+
 		--texture variables
 		baseTexName,
 		diffuseTex,
@@ -76,15 +85,15 @@ Author: Walter Low
 		
 		fn InitVariables =
 		(
-			--RMT.settingsfile = getDir #userscripts + "\\" + RMT.scriptName + "\\" + "RMTSettings.ini"
 			RMT.script_path = getDir #userscripts
+			RMT.settingsfile = getDir #userscripts + "\\RocketMaxTools\\" + "RMTSettings.ini"
+			RMT.svn_path = "C:\\Projects\\Cow2\\Tools\\Maxscripts\\RocketMaxTools\\"
 			RMT.working_path = "C:\\Projects\\Cow2\\Assets\\Screens\\working\\"
 			RMT.final_path =  "C:\\Projects\\Cow2\\Assets\\Screens\\"
 			RMT.shader_path = "C:\\Projects\\Cow2\\Assets\\Shaders\\"
 			RMT.ext = ".png"
 			RMT.mrRender = renderers.current = mental_ray_renderer()
-			RMT.slRender = Default_Scanline_Renderer()
-			RMT.SetupFG()
+			--RMT.SetupFG()
 			
 			RMT.ladderID = 500
 			RMT.glassID = 600
@@ -111,20 +120,16 @@ Author: Walter Low
 				RMT.silhouetteTex = RMT.final_path + RMT.baseTexName + "-F" + RMT.ext
 				RMT.decalTex = RMT.final_path + RMT.baseTexName + "-G" + RMT.ext
 				
-				format "Initialize texture path for % scene. \n" RMT.baseTexName 
+				format "Initialize texture path for % scene.\n" RMT.baseTexName 
 			) 
 			else ( print ("Fail to init texture paths. Please save and name your file first.") )
 		),
 		
 		fn InitCallbacks =
 		(
-			-- refresh UI if scene changed (load, reset, new, nodes renamed, deleted)
 			callbacks.addScript #systemPostNew "RMT.callback_SceneChanged()" id:#RMT_callback_RefreshUI
 			callbacks.addScript #systemPostReset "RMT.callback_SceneChanged()" id:#RMT_callback_RefreshUI
 			callbacks.addScript #filePostOpen "RMT.callback_SceneChanged()" id:#RMT_callback_RefreshUI
-		
-			--todo: consider removing
-			--callbacks.addScript #filePostSave "RMT.callback_SceneChanged()" id:#RMT_callback_RefreshUI
 		),
 		
 		fn DestroyCallbacks=
@@ -142,16 +147,10 @@ Author: Walter Low
 			RMT.mrRender.DistributedEnable = ro_Menu03.chkbox_NR.checked
 		),
 		
-		fn getMaxFileName =
-		(
-			local filename = getFilenameFile maxfilename
-			return filename 
-		),
-		
+
 		fn makeDirName dirName =
 		(
-			if (not (doesfileExist dirName) ) then ( MAKEDir dirName)
-			else ( format "\n % dirName exists!" dirName )
+			if not doesfileExist dirName then MAKEDir dirName
 		),
 		
 		fn OneObject = 
@@ -270,28 +269,28 @@ Author: Walter Low
 						#TexDiffuse: shaderfx.TexDiffuse = 							(LoadBitmap TexDiffuse)
 						#TexBump: shaderfx.TexBump = 								(LoadBitmap TexBump)
 						#TexLightMap: shaderfx.TexLightMap = 						(LoadBitmap TexLightMap)
-						#Shininess: shaderfx.Shininess = 								Shininess
-						#BloodWallDepth: shaderfx.BloodWallDepth = 				BloodWallDepth
+						#Shininess: shaderfx.Shininess = 							Shininess
+						#BloodWallDepth: shaderfx.BloodWallDepth = 					BloodWallDepth
 						#BloodBlend: shaderfx.BloodBlend = 							BloodBlend
-						#ShadowFactor: shaderfx.ShadowFactor = 					ShadowFactor
-						#HighlightMultiplier: shaderfx.HighlightMultiplier = 			HighlightMultiplier
-						#Blend: shaderfx.Blend = 											BlendVal
-						#Show_Transparency: shaderfx.Show_Transparency = 	Show_Transparency
+						#ShadowFactor: shaderfx.ShadowFactor = 						ShadowFactor
+						#HighlightMultiplier: shaderfx.HighlightMultiplier = 		HighlightMultiplier
+						#Blend: shaderfx.Blend = 									BlendVal
+						#Show_Transparency: shaderfx.Show_Transparency = 			Show_Transparency
 						--additional props from flipbook-addictive shader
-						#FlipSpeed: shaderfx.FlipSpeed = 								FlipSpeed
-						#FlipBlend: shaderfx.FlipBlend =									FlipBlend
-						#NumFramesX: shaderfx.NumFramesX =						NumFramesX
-						#NumFramesY: shaderfx.NumFramesY =						NumFramesY
+						#FlipSpeed: shaderfx.FlipSpeed = 							FlipSpeed
+						#FlipBlend: shaderfx.FlipBlend =							FlipBlend
+						#NumFramesX: shaderfx.NumFramesX =							NumFramesX
+						#NumFramesY: shaderfx.NumFramesY =							NumFramesY
 						#FrameWidth: shaderfx.FrameWidth =							FrameWidth
 						#FrameHeight: shaderfx.FrameHeight =						FrameHeight
 						#ImageWidth: shaderfx.ImageWidth =							ImageWidth
 						#ImageHeight: shaderfx.ImageHeight = 						ImageHeight
 						#Current_Tim_e: shaderfx.Current_Tim_e = 					Current_Tim_e
-						#timeoffset: shaderfx.timeoffset =								timeoffset
+						#timeoffset: shaderfx.timeoffset =							timeoffset
 						--additional props from cloud shader
-						#ScrollOffset: shaderfx.ScrollOffset = 							ScrollOffset
-						#ScrollSpeed: shaderfx.ScrollSpeed =							ScrollSpeed
-						#time: shaderfx.time =												cloudTime
+						#ScrollOffset: shaderfx.ScrollOffset = 						ScrollOffset
+						#ScrollSpeed: shaderfx.ScrollSpeed =						ScrollSpeed
+						#time: shaderfx.time =										cloudTime
 					)
 				)	
 				
@@ -307,9 +306,7 @@ Author: Walter Low
 
 		fn SetupMats =
 		(
-			--reinit png paths
-			--RMT.InitTextures()
-			
+
   			try
 			(
 
@@ -339,19 +336,25 @@ Author: Walter Low
 
 			) --end try
 			
-			catch( messagebox "Script Error: Please restart max or contact Walter. ;) ")
+			catch
+			(
+				format "*** % ***\n" (getCurrentException())
+				messagebox "Script Error: Please restart max or contact Walter. ;) "
+			)
 		),
 		
 		fn CleanMats =
 		(
-			local objArray
-			undo on (
-				objArray = getCurrentSelection()
+			undo on
+			(
+				
+				local objArray = getCurrentSelection()
+				
 				if objArray.count == 0 then
 				(
 					if querybox "Do you want to clear all object materials in the scene?" beep:true do
-					$*.material = undefined
-					macros.run "Medit Tools" "clear_medit_slots"
+						$*.material = undefined
+						macros.run "Medit Tools" "clear_medit_slots"
 				)
 				else
 				(
@@ -366,8 +369,7 @@ Author: Walter Low
 		
 		fn SetupFG =
 		(
-			
--- 			if (renderers.current != RMT.mrRender) then renderers.current = RMT.mrRender
+ 			if (renderers.current != RMT.mrRender) then renderers.current = RMT.mrRender
 			
 			--FG BASICS
 			RMT.mrRender.FinalGatherEnable2 = true 
@@ -385,92 +387,65 @@ Author: Walter Low
 			
 			RMT.mrRender.MaximumReflections = 1
 			RMT.mrRender.MaximumRefractions = 1
-			
-			
+						
 			print ("MentalRay FG Settings Loaded")
 		),
 		
 		fn BakeObject obj texsize =
 		(
 			local render_path, bp, lm, ilm, ao
-			
--- 			if renderers.current != RMT.mrRender then ( RMT.mrRender ; print"swap")
-			
-			if(classof $ == Editable_Poly and selection.count == 1 ) then
+						
+			if (classof $ == Editable_Poly and selection.count == 1 ) then
 			(
 			
-			try (destroyDialog gTextureBakeDialog)catch()
-			--macros.run "Render" "BakeDialog"
-			--mr = renderers.current = mental_ray_renderer()
-			
-			render_path = RMT.working_path + getFileNameFile maxFileName + "\\"
+				try (destroyDialog gTextureBakeDialog)catch()
+				--macros.run "Render" "BakeDialog"
 
-			RMT.makeDirName(render_path)
+				render_path = RMT.working_path + getFileNameFile maxFileName + "\\"
+				RMT.makeDirName(render_path)
+				
 			
-			/* if (not (doesfileExist render_path) ) then ( MAKEDir render_path)
-			else
-			(
-				try(
-				RTT_SceneData_AppData_Index = 0x41dd73d5
-				RTT_data.FileOutput_FilePath = render_path
-				setAppData rootNode (RTT_SceneData_AppData_Index+4) RTT_data.FileOutput_FilePath
-				) catch()
-			) */
-			
-			bp = obj.INodeBakeProperties
-			bp.removeAllBakeElements()
-			bp.bakeEnabled = true
-			bp.bakeChannel = 2
-			bp.nDilations = 2
+				bp = obj.INodeBakeProperties
+				bp.removeAllBakeElements()
+				bp.bakeEnabled = true
+				bp.bakeChannel = 2
+				bp.nDilations = 2
 
-			--Lightmap
-			lm = LightingMap()
-			lm.outputSzX = lm.outputSzY = texsize
-			--lm.filenameUnique = true
-			
-			--lm.fileType = render_path + $.name + lm.elementName + ".png"
-			--lm.fileName = render_path + $.name + lm.elementName + ".png"
-			
-			lm.fileType = render_path + $.name + "_Light"  + ".png"
-			lm.fileName = render_path + $.name + "_Light"  + ".png"
+				--Lightmap
+				lm = LightingMap()
+				lm.outputSzX = lm.outputSzY = texsize
+				lm.fileName = render_path + $.name + "_Light"  + ".png"
 
-			lm.shadowsOn = true
-			lm.directOn = true
-			lm.indirectOn = false
-			
-			
-			--Indirect Lightmap
-			ilm = LightingMap()
-			ilm.outputSzX = ilm.outputSzY = texsize
-			--ilm.filenameUnique = true
-			ilm.fileType = render_path + $.name + "_IL" + ".png"
-			ilm.fileName = render_path + $.name + "_IL" + ".png"
-			
-			ilm.shadowsOn = false
-			ilm.directOn = false
-			ilm.indirectOn = true
-			
-			--AOmap
-			ao = Ambient_Occlusion()
-			ao.outputSzX = ao.outputSzY = texsize
-			--ao.filenameUnique = true
-			ao.fileType = render_path + $.name + "_AO" + ".png"
-			ao.fileName = render_path + $.name + "_AO" + ".png"
-			
-			ao.samples = 512
-			ao.spread = 1
-			ao.maxDistance = 1
-			ao.falloff = 1
-			
-			--Add elements
-			bp.addBakeElement lm
-			bp.addBakeElement ilm
-			bp.addBakeElement ao
-			
-			--Render
-			--render rendertype:#bakeSelected outputwidth:Xsize outputheight:Ysize outputfile:(fPath+fName+fType)
-			--render rendertype:#bakeSelected vfb:on progressBar:true outputSize:[2048,2048]
-			render renderType:#bakeSelected frame:#current vfb:true outputwidth:texsize outputheight:texsize
+				lm.shadowsOn = true
+				lm.directOn = true
+				lm.indirectOn = false
+								
+				--Indirect Lightmap
+				ilm = LightingMap()
+				ilm.outputSzX = ilm.outputSzY = texsize
+				ilm.fileName = render_path + $.name + "_IL" + ".png"
+				
+				ilm.shadowsOn = false
+				ilm.directOn = false
+				ilm.indirectOn = true
+				
+				--AOmap
+				ao = Ambient_Occlusion()
+				ao.outputSzX = ao.outputSzY = texsize
+				ao.fileName = render_path + $.name + "_AO" + ".png"
+				
+				ao.samples = 512
+				ao.spread = 1
+				ao.maxDistance = 1
+				ao.falloff = 1
+				
+				--Add elements
+				bp.addBakeElement lm
+				bp.addBakeElement ilm
+				bp.addBakeElement ao
+				
+				--Render
+				render renderType:#bakeSelected frame:#current vfb:true outputwidth:texsize outputheight:texsize
 		)
 		else( MessageBox("Select Something!") )
 	),
@@ -590,8 +565,9 @@ Author: Walter Low
 		
 		if (selection.count != 0) then
 		(
-		exportFile (fileExportName) selectedOnly:true using:ColladaExporter 
-		) else (messageBox "Select Something!")
+			exportFile (fileExportName) selectedOnly:true using:ColladaExporter 
+		)
+		else (messageBox "Select Something!")
 	),
 	
 	fn createMRSkyPortal =
@@ -645,7 +621,7 @@ Author: Walter Low
 	
 	fn sendtoLayer obj layerName =
 	(
-		local o, theLayer
+		local theLayer
 		
 		if selection.count != 0 then
 			(
@@ -667,26 +643,22 @@ Author: Walter Low
 	
 	fn HideLayer layername =
 	(
-		local layer
-		layer = LayerManager.getLayerfromName layerName
+		local layer = LayerManager.getLayerfromName layerName
 		if (layer != undefined) then layer.ishidden = true
 	),
 
 	fn ToggleLayer layername =
 	(
-		local layer
-		layer = LayerManager.getLayerfromName layerName
+		local layer = LayerManager.getLayerfromName layerName
 		if (layer != undefined) then layer.ishidden = not layer.ishidden
 	),
 	
 	fn DeleteEmptyLayers =
-	(
-		local layerIndex, layername
-		
+	(	
 		for i = LayerManager.count-1 to 0 by -1 do
 		(
-			layerIndex = layerManager.getLayer i
-			layerName = layerIndex.name
+			local layerIndex = layerManager.getLayer i
+			local layerName = layerIndex.name
 			layerManager.deleteLayerByName layerName
 		)
 	),
@@ -698,42 +670,39 @@ Author: Walter Low
 	),
 	
 	fn WeldVertices =
-	(
-		local obj, allVerts, selVerts
-		
+	(	
 		for obj in selection do
 		( 
-				
-				if (subobjectlevel == 0) then
+			if (subobjectlevel == 0) then
+			(
+				undo on
 				(
-					undo on
+					obj.weldThreshold = 0.001 -- set weld threshold value
+					local allVerts = #{1..(polyop.getNumVerts obj)} -- get all verts list
+					--print	("verts: " + allVerts.count as string)
+					if (allVerts.count != 0) then
 					(
-						obj.weldThreshold = 0.001 -- set weld threshold value
-						allVerts = #{1..(polyop.getNumVerts obj)} -- get all verts list
-						--print	("verts: " + allVerts.count as string)
-						if (allVerts.count != 0) then
-						(
-							print ("Welded: " + allVerts.count as string  + " verts.")
-							polyop.weldVertsByThreshold obj allVerts -- Weld
-						)
+						print ("Welded: " + allVerts.count as string  + " verts.")
+						polyop.weldVertsByThreshold obj allVerts -- Weld
 					)
 				)
-				
-				if (subobjectlevel == 1) then
+			)
+			
+			if (subobjectlevel == 1) then
+			(
+				undo on
 				(
-					undo on
+					$.weldThreshold = 0.001 -- set weld threshold value
+					local selVerts = $.selectedverts
+					--print	("verts: " + selVerts.count as string)
+					if (selVerts.count !=0 ) then
 					(
-						$.weldThreshold = 0.001 -- set weld threshold value
-						selVerts = $.selectedverts
-						--print	("verts: " + selVerts.count as string)
-						if (selVerts.count !=0 ) then
-						(
-						print ("Welded: " + selVerts.count as string + " verts.")
-						$.EditablePoly.weldFlaggedVertices ()
-						)
-						else (messagebox("Select verts to weld!"))
+					print ("Welded: " + selVerts.count as string + " verts.")
+					$.EditablePoly.weldFlaggedVertices ()
 					)
-				) 
+					else (messagebox("Select verts to weld!"))
+				)
+			) 
 		)
 	),
 	
@@ -769,8 +738,7 @@ Author: Walter Low
 	
 	fn CenPivot = 
 	(
-		local selected_vert, selected_vert_pos, selected_edge, selected_edge_verts
-		
+
 		if (selection.count != 0) then
 		(
 			for obj in selection do
@@ -784,10 +752,10 @@ Author: Walter Low
 
 			if (subobjectlevel == 1) then
 			(
-				selected_vert = polyop.getVertSelection $ as array
+				local selected_vert = polyop.getVertSelection $ as array
 				if (selected_vert.count == 1) then
 				(
-					selected_vert_pos = polyop.getVert $ selected_vert[1]
+					local selected_vert_pos = polyop.getVert $ selected_vert[1]
 					$.pivot = selected_vert_pos
 					subobjectlevel = 0
 				) else (Messagebox "Select a vertex!")
@@ -795,8 +763,8 @@ Author: Walter Low
 			
 			if (subobjectlevel == 2) then
 			(
-				selected_edge = polyop.getEdgeSelection $
-				selected_edge_verts = (polyop.getVertsUsingEdge $ selected_edge ) as array
+				local selected_edge = polyop.getEdgeSelection $
+				local selected_edge_verts = (polyop.getVertsUsingEdge $ selected_edge ) as array
 				if (selected_edge_verts.count == 2) then
 				(
 					selected_edge_center = ( (polyop.getVert $ selected_edge_verts[1]) + (polyop.getVert $ selected_edge_verts[2]) ) / 2
@@ -819,13 +787,14 @@ Author: Walter Low
 	
 	fn DetachFace thename: (uniquename "detached") =
 	(
-		local selectedFaces
-		
-		if(subobjectlevel == 0 ) then ()
+
+		if subobjectlevel == 0 then ()
 		else
 		(
-			selectedFaces = polyop.getFaceSelection $
-			if (selectedFaces.isEmpty) then (messagebox("Please select some faces!"))
+			local selectedFaces = polyop.getFaceSelection $
+			
+			if selectedFaces.isEmpty then
+				(messagebox("Please select some faces!"))
 			else
 			(	
 				selectedFaces = polyop.getFaceSelection $
@@ -837,16 +806,15 @@ Author: Walter Low
 	
 	fn CreateBouncer =
 	(
-		local b, themat
-	
+			
 		if sceneMaterials["bouncer"] == undefined then
 		(
-			themat = StandardMaterial name:"bouncer" specularLevel:30 glossiness:10 diffusecolor: (color 50 50 50)
+			local themat = StandardMaterial name:"bouncer" specularLevel:30 glossiness:10 diffusecolor: (color 50 50 50)
 		)
 		
 		if ($Bouncer == undefined) then
 		(
-			b = Plane length:12 width: 43 pos:[20,-1,6] isSelected:on lengthsegs:1 widthsegs:1
+			local b = Plane length:12 width: 43 pos:[20,-1,6] isSelected:on lengthsegs:1 widthsegs:1
 			rotate b (angleaxis -90 [1,0,0])
 			convertToPoly b
 			b.name = "Bouncer"
@@ -870,9 +838,8 @@ Author: Walter Low
 	),
 	
 	fn importFX = 
-	(
-		
-		mergemaxfile (RMT.script_path + "\\RocketMaxTools\\Assets\\FX\\FX.max") #select #useSceneMtlDups
+	(		
+		mergemaxfile (RMT.svn_path + "Assets\\FX\\FX.max") #select #useSceneMtlDups
 		
 		if scenematerials["Multiply"] != undefined then
 		(
@@ -952,8 +919,8 @@ Author: Walter Low
 	
 	fn TransferUV source target sourcechn targetchn = 
 	(
-	ChannelInfo.CopyChannel source 3 sourcechn
-	ChannelInfo.PasteChannel target 3 targetchn
+		ChannelInfo.CopyChannel source 3 sourcechn
+		ChannelInfo.PasteChannel target 3 targetchn
 	),
 	
 	fn AutoDoors =
@@ -1006,6 +973,9 @@ Author: Walter Low
 			)
 		)
 	),
+	
+	--Select similar script written by Mike Pickton
+	--http://mixescript.blogspot.com/
 	
 	fn SelectSimilar =
 	(
@@ -1185,14 +1155,13 @@ Author: Walter Low
 	
 	fn EditNormalFix type =
 	(
-		local smoothMod, obj
 		
-		smoothMod = Smooth()
+		local smoothMod = Smooth()
 		--smoothMod.autosmooth = on
 		if (type == 1) then (smoothMod.smoothingBits = 1) else (smoothMod.smoothingBits = 0)
 
 		smoothMod.threshold = 180
-		obj = getCurrentSelection()
+		local obj = getCurrentSelection()
 		
 		if (obj.count != 0) then
 		(
@@ -1229,11 +1198,9 @@ Author: Walter Low
 	),
 
 	fn Detach matid objname =
-	(
-		local selectedFaces
-		
+	(	
 		$.selectByMaterial matid
-		selectedFaces = polyop.getFaceSelection $
+		local selectedFaces = polyop.getFaceSelection $
 		polyop.detachFaces $ selectedFaces asNode:true name: objname
 	),
 	
@@ -1322,16 +1289,14 @@ Author: Walter Low
 	),
 	
 	fn assignFaceGenericMatID id =
-	(
-		local selectedFaces
-		
+	(		
 		if selection.count == 1 then
 		(
 			if subobjectlevel == 0 do messagebox "Select faces or elements"
 			
 			if subobjectlevel == 4 or subobjectlevel == 5 then
 			(
-				selectedFaces = polyOp.getFaceSelection $
+				local selectedFaces = polyOp.getFaceSelection $
 				if ( not selectedFaces.isEmpty) then polyop.setFaceMatID $ selectedFaces id
 				else ( messagebox "Select faces or elements")
 			) 
@@ -1348,18 +1313,16 @@ Author: Walter Low
 	
 	fn BulkDoorDetach =	
 	(
-		local totalFaces, selectedFaces, objName, layer
-		
-		totalFaces = #()
+		local totalFaces = #()
 		for i = 0 to 7 do
 		(
 			id = ("10" + i as string)
 			$.selectByMaterial (id as integer)
-			selectedFaces = polyop.getFaceSelection $
+			local selectedFaces = polyop.getFaceSelection $
 			join totalFaces selectedFaces
 		)
-		objName = "_Breakables"
-		layer = "Exit_Breakable"
+		local objName = "_Breakables"
+		local layer = "Exit_Breakable"
 		polyop.detachFaces $ totalFaces asNode:true name: objName
 		RMT.sendtoLayerByName objName layer
 		
@@ -1436,8 +1399,6 @@ Author: Walter Low
 		)
 		
 		RMT.DeleteEmptyObjects()
-		--delete (for obj in Geometry where classof obj == Editable_Poly and polyop.getNumFaces obj == 0 collect obj)
-		--AutoDoors()
 	),
 	
 	fn splitOthers =
@@ -1456,15 +1417,13 @@ Author: Walter Low
 	),
 	
 	fn Backup =
-	(
-		
+	(		
 		local mfn = getfilenamefile maxfilename
 		local fList, fCount, fVer, fOut, fFilter, a, ver
 		
 		fList = getfiles( RMT.working_path + mfn + "\\" + "*_Backup_*.max" )
 		fCount = 0
 
-			
 		if fList.count == 0 then
 		(
 			fCount += 1
@@ -1544,14 +1503,11 @@ Author: Walter Low
 						o.material = meditmaterials[9]
 						RMT.sendtoLayerByName o.name "Silhouette"
 						format "found: %" o.name
-					)
-					
+					)					
 				)
 
 				for o in objects where (classof o.baseobject == Editable_Poly) do
 				(
-	-- 				ChannelInfo.CopyChannel o 3 1
-	-- 				ChannelInfo.PasteChannel o 3 2	
 					RMT.TransferUV o o 1 2
 					collapseStack o
 				)
@@ -1595,8 +1551,6 @@ Author: Walter Low
 
 				for o in objects where (classof o.baseobject == Editable_Poly) do
 				(
-	-- 				ChannelInfo.CopyChannel o 3 1
-	-- 				ChannelInfo.PasteChannel o 3 2	
 					RMT.TransferUV o o 1 2
 					collapseStack o
 				)
@@ -1609,10 +1563,7 @@ Author: Walter Low
 	
 	fn SemiAutoSetup =
 	(
--- 		if (getSaveRequired() ) then
--- 		(
--- 			getMAXSaveFileName()
--- 		)
+		--To do...
 		ImportLevel()
 	),
 	
@@ -1627,16 +1578,16 @@ Author: Walter Low
 		
 		RMT.InitCallbacks()
 		
-		rf_MainFloater = newRolloutFloater "RocketMaxTools 1.02" 268 780
+		rf_MainFloater = newRolloutFloater "RocketMaxTools 1.04" 268 780
 		
-		if RMT.settingsfile != undefined then
+		if doesFileExist RMT.settingsfile then
 		(
 			rf_MainFloater.pos.x = (getINISetting RMT.settingsfile "General" "Window Pos X") as integer
 			rf_MainFloater.pos.y = (getINISetting RMT.settingsfile "General" "Window Pos Y") as integer
 		)
 		else
 		(
-			
+			makeDir (getdir #userscripts + "\\RocketMaxTools\\")
 			setINISetting RMT.settingsfile "General" "Window Pos X" "0"
 			setINISetting RMT.settingsfile "General" "Window Pos Y" "0"
 	
@@ -1647,13 +1598,6 @@ Author: Walter Low
 		addRollout ro_Menu02 rf_MainFloater
 		addRollout ro_Menu03 rf_MainFloater
 		addRollout ro_Menu04 rf_MainFloater
-		
-		--Add these lines if you want everythign to be part of the main UI, (no floating dialogs)
-		
--- 		addRollout ro_animHelper rf_mainFloater
--- 		addRollout ro_TransferUV rf_MainFloater
--- 		addrollout ro_doorHelper rf_MainFloater
-		
 		addRollout ro_Rocketbirds rf_MainFloater
 
 		
@@ -1661,10 +1605,8 @@ Author: Walter Low
 	
 	fn ExitUI =
 	(
-		--setINISetting 
-		--save position for main rollout
-		try( setINISetting RMT.settingsfile "General" "Window Pos X" ((rf_MainFloater.pos.x as integer) as string) )catch();
-		try( setINISetting RMT.settingsfile "General" "Window Pos Y" ((rf_MainFloater.pos.y as integer) as string) )catch();
+		try( setINISetting RMT.settingsfile "General" "Window Pos X" (rf_MainFloater.pos.x as string) )catch();
+		try( setINISetting RMT.settingsfile "General" "Window Pos Y" (rf_MainFloater.pos.y as string) )catch();
 	
 		RMT.DestroyCallbacks()
 
@@ -1724,11 +1666,11 @@ Author: Walter Low
 			(
 				case ddl_import.selected of
 				(
-					"Chicken": mergemaxfile (RMT.script_path + "\\RocketMaxTools\\Assets\\Chicken\\RiggedChicken.max") #select #useSceneMtlDups
+					"Chicken": mergemaxfile (RMT.svn_path + "Assets\\Chicken\\RiggedChicken.max") #select #useSceneMtlDups
 					"FX": RMT.importFX()
-					"Grates": mergemaxfile (RMT.script_path  + "\\RocketMaxTools\\Assets\\Grates\\Grates.max") #select #useSceneMtlDups
-					"Lines": mergemaxfile (RMT.script_path  + "\\RocketMaxTools\\Assets\\Lines\\Lines.max") #select #useSceneMtlDups
-					"Abattoir Lines": mergemaxfile (RMT.script_path  + "\\RocketMaxTools\\Assets\\Lines\\AbattoirLines.max") #select #useSceneMtlDups
+					"Grates": mergemaxfile (RMT.svn_path + "Assets\\Grates\\Grates.max") #select #useSceneMtlDups
+					"Lines": mergemaxfile (RMT.svn_path  + "Assets\\Lines\\Lines.max") #select #useSceneMtlDups
+					"Abattoir Lines": mergemaxfile (RMT.svn_path  + "Assets\\Lines\\AbattoirLines.max") #select #useSceneMtlDups
 			
 				)
 			)
@@ -1806,11 +1748,9 @@ Author: Walter Low
 		
 		fn bulkDoor targetname layername =
 		(
-
-			local prevobj
 			if selection.count == 1 then
 			(
-				prevobj = $
+				local prevobj = $
 				RMT.DetachFace thename:targetname 
 				RMT.sendtoLayer ( select( getnodebyname(targetname) ) ) layername
 				RMT.HideLayer layername
@@ -2072,15 +2012,13 @@ Author: Walter Low
 			(
 				for i = 1 to copies-1 do
 				(
-					
 					maxOps.cloneNodes selection cloneType:#copy newNodes:&objs
 					select objs
+					
 					for i = 1 to objs.count do
 					(
 						local selkeys = selectKeys objs[i].controller
 						moveKeys objs[i].controller -(fend/copies) #selection
-						--objs[i].controller.keys.time -= (fend/copies) 
-						--deselectKeys nnl[i].controller
 					)
 					
 				)
@@ -2248,7 +2186,7 @@ Author: Walter Low
 	
 	rollout ro_Rocketbirds "Rocketbirds" rolledup:false
 	(
-		local imglogo = GetDir #userScripts + "\\RocketMaxTools\\rb.bmp"
+		local imglogo = @"C:\Projects\Cow2\Tools\Maxscripts\RocketMaxTools\rb.bmp"
 		button btn_logo "" tooltip:"Open Working Folder"align:#center width:256 height:128 images:#(imglogo,undefined,1,1,1,1,1) enabled:true
 		
 		on btn_logo pressed do (shellLaunch "explorer.exe" RMT.working_path)

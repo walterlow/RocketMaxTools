@@ -1,7 +1,6 @@
-
 /*******************************************************************************************************
--- Created: 		08-06-2015
--- Last Updated:	18-09-2015
+-- Created: 		08-Jun-2015
+-- Last Updated:	19-Sep-2015
 -- Version:			0.04
 --
 -- Author :  Walter Low / walterlow88@gmail.com / walterlow.com
@@ -10,10 +9,10 @@
 -- Description: A script to render image sequences from Left and Right cameras based off a Main Camera.
 -- Usage: RUN IT
 --
--- Wishlist:
+-- TODO:
 --
 -- Changelog:
-0.04:
+0.04: 19-09-2015
 +	Added render frame constrains
 +	Freeze left and right cams upon creation or tool open.
 *	Changed output formatting to 6 digits.
@@ -22,6 +21,8 @@
 0.02:
 +	Camera offset distance updates according to cameras in scene.
 +	Option to render mono or stereo frames.
+0.01:
++	initial tool
 
 *******************************************************************************************************/
 
@@ -31,7 +32,7 @@ try(DestroyDialog roStereoCam)catch();
 (
 	global roStereoCam
 	
-	rollout roStereoCam "Stereo Cam Tool" width:236 height:450
+	rollout roStereoCam "Stereo Cam Tool 0.04" width:236 height:450
 	(
 		
 		local fPath
@@ -255,8 +256,7 @@ try(DestroyDialog roStereoCam)catch();
 				mainCam = $Cam_Main 
 				leftCam = $Cam_StereoLeft
 				rightCam = $Cam_StereoRight
-				
-								
+					
 				freeze leftCam
 				freeze rightCam
 				
@@ -440,8 +440,7 @@ try(DestroyDialog roStereoCam)catch();
 			else
 			(
 				renderWidth = value
-			)
-			
+			)			
 		)
 		
 		on spn_frameHeight changed value do
@@ -455,8 +454,7 @@ try(DestroyDialog roStereoCam)catch();
 			else
 			(
 				renderHeight = value
-			)
-			
+			)			
 		)
 	)
 	
